@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // update_positive
-List update_positive(int type, NumericVector params, NumericVector y, NumericVector sigma);
-RcppExport SEXP _cpbayes_update_positive(SEXP typeSEXP, SEXP paramsSEXP, SEXP ySEXP, SEXP sigmaSEXP) {
+List update_positive(int type, NumericVector params, NumericVector y, NumericVector sigma, NumericVector shape, NumericVector rate);
+RcppExport SEXP _cpbayes_update_positive(SEXP typeSEXP, SEXP paramsSEXP, SEXP ySEXP, SEXP sigmaSEXP, SEXP shapeSEXP, SEXP rateSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< NumericVector >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_positive(type, params, y, sigma));
+    Rcpp::traits::input_parameter< NumericVector >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rate(rateSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_positive(type, params, y, sigma, shape, rate));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -39,7 +41,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cpbayes_update_positive", (DL_FUNC) &_cpbayes_update_positive, 4},
+    {"_cpbayes_update_positive", (DL_FUNC) &_cpbayes_update_positive, 6},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
     {NULL, NULL, 0}
 };

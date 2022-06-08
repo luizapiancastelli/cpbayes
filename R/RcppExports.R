@@ -6,8 +6,10 @@
 #' @param params c(mu, nu) vector
 #' @param y data
 #' @param sigma c(sigma_mu, sigma_nu) vector of proposal parameters
-update_positive <- function(type, params, y, sigma) {
-    .Call(`_cpbayes_update_positive`, type, params, y, sigma)
+#' @param shape c(shape_mu, shape_nu) Gamma prior shape parameters
+#' @param rate c(rate_mu, rate_nu) Gamma prior rate parameters
+update_positive <- function(type, params, y, sigma, shape, rate) {
+    .Call(`_cpbayes_update_positive`, type, params, y, sigma, shape, rate)
 }
 
 #' COM-Poisson rejection sampling

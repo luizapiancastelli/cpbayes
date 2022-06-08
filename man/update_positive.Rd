@@ -4,7 +4,7 @@
 \alias{update_positive}
 \title{Update positive parameters in the no-regression case}
 \usage{
-update_positive(type, params, y, sigma)
+update_positive(type, params, y, sigma, shape, rate)
 }
 \arguments{
 \item{type}{0 or 1: updates mu, or nu}
@@ -14,6 +14,10 @@ update_positive(type, params, y, sigma)
 \item{y}{data}
 
 \item{sigma}{c(sigma_mu, sigma_nu) vector of proposal parameters}
+
+\item{shape}{c(shape_mu, shape_nu) Gamma prior shape parameters}
+
+\item{rate}{c(rate_mu, rate_nu) Gamma prior rate parameters}
 }
 \description{
 Update positive parameters in the no-regression case
