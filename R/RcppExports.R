@@ -12,6 +12,18 @@ update_positive <- function(type, params, y, sigma, shape, rate) {
     .Call(`_cpbayes_update_positive`, type, params, y, sigma, shape, rate)
 }
 
+#' MCMC sampling: no regression case
+#' @param y data
+#' @param params0 initial parameter values
+#' @param sigma c(sigma_mu, sigma_nu) vector of proposal parameters
+#' @param n_iter number of iterations to store
+#' @param burn_in burn-in period
+#' @param hyperparams named list containing 'shape' c(shape_mu, shape_nu) gamma prior shape parameters and
+#' 'rate' c(rate_mu, rate_nu) Gamma prior rate parameters.
+exchange_noreg <- function(y, params0, sigma, n_iter, burn_in, hyperparams) {
+    .Call(`_cpbayes_exchange_noreg`, y, params0, sigma, n_iter, burn_in, hyperparams)
+}
+
 #' COM-Poisson rejection sampling
 #'
 #' @param n number of samples

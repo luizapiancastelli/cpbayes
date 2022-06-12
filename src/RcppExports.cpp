@@ -26,6 +26,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// exchange_noreg
+List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma, int n_iter, int burn_in, List hyperparams);
+RcppExport SEXP _cpbayes_exchange_noreg(SEXP ySEXP, SEXP params0SEXP, SEXP sigmaSEXP, SEXP n_iterSEXP, SEXP burn_inSEXP, SEXP hyperparamsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type params0(params0SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_iter(n_iterSEXP);
+    Rcpp::traits::input_parameter< int >::type burn_in(burn_inSEXP);
+    Rcpp::traits::input_parameter< List >::type hyperparams(hyperparamsSEXP);
+    rcpp_result_gen = Rcpp::wrap(exchange_noreg(y, params0, sigma, n_iter, burn_in, hyperparams));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcompois
 NumericVector rcompois(int n, double mu, double nu);
 RcppExport SEXP _cpbayes_rcompois(SEXP nSEXP, SEXP muSEXP, SEXP nuSEXP) {
@@ -42,6 +58,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cpbayes_update_positive", (DL_FUNC) &_cpbayes_update_positive, 6},
+    {"_cpbayes_exchange_noreg", (DL_FUNC) &_cpbayes_exchange_noreg, 6},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
     {NULL, NULL, 0}
 };
