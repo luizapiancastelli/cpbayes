@@ -24,6 +24,22 @@ exchange_noreg <- function(y, params0, sigma, n_iter, burn_in, hyperparams) {
     .Call(`_cpbayes_exchange_noreg`, y, params0, sigma, n_iter, burn_in, hyperparams)
 }
 
+#' COM-Poisson sampling under mu and nu vectors
+#' @param mu vector from linking function exp(beta_{mu,0} + beta_{mu,1}*x1 + ...)
+#' @param nu vector from linking function exp(beta_{nu,0} + beta_{nu,1}*x1 + ...)
+rcompoisreg <- function(mu, nu) {
+    .Call(`_cpbayes_rcompoisreg`, mu, nu)
+}
+
+#' Normal proposal
+#' @param index starting from 0, the parameter to propose
+#' @param param vector
+#' @param sigma vector
+#' @return param vector with updated position 'index'
+proposal_normal <- function(index, param, sigma) {
+    .Call(`_cpbayes_proposal_normal`, index, param, sigma)
+}
+
 #' COM-Poisson rejection sampling
 #'
 #' @param n number of samples
