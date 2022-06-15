@@ -4,12 +4,16 @@
 \alias{rcompoisreg}
 \title{COM-Poisson sampling under mu and nu vectors}
 \usage{
-rcompoisreg(mu, nu)
+rcompoisreg(beta_mu, beta_nu, X_mu, X_nu)
 }
 \arguments{
-\item{mu}{vector from linking function exp(beta_{mu,0} + beta_{mu,1}*x1 + ...)}
+\item{beta_mu}{location regression parameters}
 
-\item{nu}{vector from linking function exp(beta_{nu,0} + beta_{nu,1}*x1 + ...)}
+\item{beta_nu}{dispersion regression parameter}
+
+\item{X_mu}{model matrix for mu (first column=1: intercept)}
+
+\item{X_nu}{model matrix for nu (first column=1: intercept)}
 }
 \description{
 COM-Poisson sampling under mu and nu vectors

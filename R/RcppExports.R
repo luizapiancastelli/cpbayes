@@ -25,10 +25,12 @@ exchange_noreg <- function(y, params0, sigma, n_iter, burn_in, hyperparams) {
 }
 
 #' COM-Poisson sampling under mu and nu vectors
-#' @param mu vector from linking function exp(beta_{mu,0} + beta_{mu,1}*x1 + ...)
-#' @param nu vector from linking function exp(beta_{nu,0} + beta_{nu,1}*x1 + ...)
-rcompoisreg <- function(mu, nu) {
-    .Call(`_cpbayes_rcompoisreg`, mu, nu)
+#' @param beta_mu location regression parameters
+#' @param beta_nu dispersion regression parameter
+#' @param X_mu model matrix for mu (first column=1: intercept)
+#' @param X_nu model matrix for nu (first column=1: intercept)
+rcompoisreg <- function(beta_mu, beta_nu, X_mu, X_nu) {
+    .Call(`_cpbayes_rcompoisreg`, beta_mu, beta_nu, X_mu, X_nu)
 }
 
 #' Normal proposal
@@ -38,6 +40,19 @@ rcompoisreg <- function(mu, nu) {
 #' @return param vector with updated position 'index'
 proposal_normal <- function(index, param, sigma) {
     .Call(`_cpbayes_proposal_normal`, index, param, sigma)
+}
+
+#' Exchange move for location regression parameter
+#' @param index index of parameter to update, from 0
+#' @param beta_mu current beta_mu
+#' @param beta_nu current beta_nu
+#' @param y response vector
+#' @param X_mu location model matrix
+#' @param X_nu dispersion model matrix
+#' @param sigma_mu proposal variances
+#' @param hyperparams_mu named list with 'mean' and 'sd'
+update_beta_mu <- function(index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_mu, hyperparams_mu) {
+    .Call(`_cpbayes_update_beta_mu`, index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_mu, hyperparams_mu)
 }
 
 #' COM-Poisson rejection sampling
