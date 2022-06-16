@@ -88,6 +88,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// update_beta_nu
+List update_beta_nu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec& y, arma::mat& X_mu, arma::mat& X_nu, arma::vec& sigma_nu, List hyperparams_nu);
+RcppExport SEXP _cpbayes_update_beta_nu(SEXP indexSEXP, SEXP beta_muSEXP, SEXP beta_nuSEXP, SEXP ySEXP, SEXP X_muSEXP, SEXP X_nuSEXP, SEXP sigma_nuSEXP, SEXP hyperparams_nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type index(indexSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_mu(beta_muSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_nu(beta_nuSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_mu(X_muSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_nu(X_nuSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type sigma_nu(sigma_nuSEXP);
+    Rcpp::traits::input_parameter< List >::type hyperparams_nu(hyperparams_nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_beta_nu(index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_nu, hyperparams_nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcompois
 NumericVector rcompois(int n, double mu, double nu);
 RcppExport SEXP _cpbayes_rcompois(SEXP nSEXP, SEXP muSEXP, SEXP nuSEXP) {
@@ -108,6 +126,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpbayes_rcompoisreg", (DL_FUNC) &_cpbayes_rcompoisreg, 4},
     {"_cpbayes_proposal_normal", (DL_FUNC) &_cpbayes_proposal_normal, 3},
     {"_cpbayes_update_beta_mu", (DL_FUNC) &_cpbayes_update_beta_mu, 8},
+    {"_cpbayes_update_beta_nu", (DL_FUNC) &_cpbayes_update_beta_nu, 8},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
     {NULL, NULL, 0}
 };

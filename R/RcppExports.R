@@ -55,6 +55,19 @@ update_beta_mu <- function(index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_mu, hyp
     .Call(`_cpbayes_update_beta_mu`, index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_mu, hyperparams_mu)
 }
 
+#' Exchange move for dispersion regression parameters
+#' @param index index of parameter to update, from 0
+#' @param beta_mu current beta_mu
+#' @param beta_nu current beta_nu
+#' @param y response vector
+#' @param X_mu location model matrix
+#' @param X_nu dispersion model matrix
+#' @param sigma_nu proposal variances
+#' @param hyperparams_nu named list with 'mean' and 'sd'
+update_beta_nu <- function(index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_nu, hyperparams_nu) {
+    .Call(`_cpbayes_update_beta_nu`, index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_nu, hyperparams_nu)
+}
+
 #' COM-Poisson rejection sampling
 #'
 #' @param n number of samples
