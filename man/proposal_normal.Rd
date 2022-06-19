@@ -14,7 +14,7 @@ proposal_normal(index, param, sigma)
 \item{sigma}{vector}
 }
 \value{
-param vector with updated position 'index'
+sigma param vector with updated position 'index'
 }
 \description{
 Normal proposal

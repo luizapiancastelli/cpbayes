@@ -13,6 +13,9 @@ rcompois(n, mu, nu)
 
 \item{nu}{dispersion parameter}
 }
+\value{
+integer vector
+}
 \description{
 COM-Poisson rejection sampling
 }

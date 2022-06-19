@@ -45,7 +45,7 @@ List logqregression(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::
 //' @param index starting from 0, the parameter to propose
 //' @param param vector
 //' @param sigma vector
-//' @return param vector with updated position 'index'
+//' @return sigma param vector with updated position 'index'
 // [[Rcpp::export]]
 arma::vec proposal_normal(int index, arma::vec& param, arma::vec& sigma){
    arma::vec prime = param;
@@ -150,3 +150,86 @@ List update_beta_nu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
   return List::create(_["beta_nu"] = beta_nu_accepted, 
                       _["accepted"] = accept);
 }
+
+
+//' MCMC: regression case
+//' @param beta_mu_init initial beta_mu
+//' @param beta_nu_init initial beta_nu
+//' @param y response vector
+//' @param X_mu location model matrix
+//' @param X_nu dispersion model matrix
+//' @param burn_in integer
+//' @param n_iter integer
+//' @param sigma_mu proposal variances
+//' @param sigma_nu proposal variances
+//' @param hyperparams_mu named list with 'mean' and 'sd'
+//' @param hyperparams_nu named list with 'mean' and 'sd'
+// [[Rcpp::export]]
+List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y, arma::mat& X_mu, arma::mat& X_nu, int burn_in, int n_iter, arma::vec& sigma_mu, arma::vec& sigma_nu, List hyperparams_mu,  List hyperparams_nu){
+  
+  int n_beta= X_mu.n_cols; int n_nu = X_nu.n_cols;
+  
+  //Initialize chains and acceptance rate
+  arma::mat betamu_chain(n_iter-burn_in, n_beta);
+  arma::mat betanu_chain(n_iter-burn_in, n_nu);
+  
+  arma::vec ac_counter_mu(n_beta); 
+  ac_counter_mu.zeros();
+  arma::vec ac_counter_nu(n_nu); 
+  ac_counter_nu.zeros();
+  
+  arma::vec ac_rate_mu(n_beta); 
+  arma::vec ac_rate_nu(n_nu); 
+  ac_rate_mu.zeros();
+  ac_rate_nu.zeros();
+  
+  arma::vec betamu_current = beta_mu_init;
+  arma::vec betanu_current = beta_nu_init;
+  
+  int step =1;
+  while(step <= n_iter){
+  //Update beta mu elements:
+  for(int j =0; j < n_beta; j++){
+    List update1 =  update_beta_mu(j, betamu_current, betanu_current, y, X_mu, X_nu, sigma_mu, hyperparams_mu);
+    betamu_current =  as<arma::vec>(update1["beta_mu"]);
+    
+    ac_counter_mu[j] += int(update1["accepted"]);
+    ac_rate_mu = (1.0*ac_counter_mu)/(1.0*step);
+    
+    sigma_mu[j] = proposal_adjust(sigma_mu[j], ac_rate_mu[j], step);
+  }
+  
+  
+  //Update beta nu elements:
+  for(int k =0; k < n_nu; k++){
+    List update2 =  update_beta_nu(k, betamu_current, betanu_current, y, X_mu, X_nu, sigma_nu, hyperparams_nu);
+    betanu_current =  as<arma::vec>(update2["beta_nu"]);
+    
+    ac_counter_nu[k] += int(update2["accepted"]);
+    ac_rate_nu = (1.0*ac_counter_nu)/(1.0*step);
+    
+    sigma_nu[k] = proposal_adjust(sigma_nu[k], ac_rate_nu[k], step);
+  }
+  
+  //Storing
+  if(step > burn_in){
+    betamu_chain.row(step-burn_in-1) = betamu_current.as_row();
+    betanu_chain.row(step-burn_in-1) = betanu_current.as_row();
+  }
+  step +=  1;
+  if((step%1000) == 0){ 
+    Rprintf("Step: %i \n", step);
+  }
+  } // End interations
+
+  List output = List::create(_["betamu"] = betamu_chain, 
+                             _["betanu"] = betanu_chain,
+                             _["ac_rates_mu"] = ac_rate_mu,
+                             _["ac_rates_nu"] = ac_rate_nu);
+  
+  
+  return(output);
+              
+}          
+              
+     

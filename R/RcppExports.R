@@ -37,7 +37,7 @@ rcompoisreg <- function(beta_mu, beta_nu, X_mu, X_nu) {
 #' @param index starting from 0, the parameter to propose
 #' @param param vector
 #' @param sigma vector
-#' @return param vector with updated position 'index'
+#' @return sigma param vector with updated position 'index'
 proposal_normal <- function(index, param, sigma) {
     .Call(`_cpbayes_proposal_normal`, index, param, sigma)
 }
@@ -68,12 +68,28 @@ update_beta_nu <- function(index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_nu, hyp
     .Call(`_cpbayes_update_beta_nu`, index, beta_mu, beta_nu, y, X_mu, X_nu, sigma_nu, hyperparams_nu)
 }
 
+#' MCMC: regression case
+#' @param beta_mu_init initial beta_mu
+#' @param beta_nu_init initial beta_nu
+#' @param y response vector
+#' @param X_mu location model matrix
+#' @param X_nu dispersion model matrix
+#' @param burn_in integer
+#' @param n_iter integer
+#' @param sigma_mu proposal variances
+#' @param sigma_nu proposal variances
+#' @param hyperparams_mu named list with 'mean' and 'sd'
+#' @param hyperparams_nu named list with 'mean' and 'sd'
+exchange_reg <- function(beta_mu_init, beta_nu_init, y, X_mu, X_nu, burn_in, n_iter, sigma_mu, sigma_nu, hyperparams_mu, hyperparams_nu) {
+    .Call(`_cpbayes_exchange_reg`, beta_mu_init, beta_nu_init, y, X_mu, X_nu, burn_in, n_iter, sigma_mu, sigma_nu, hyperparams_mu, hyperparams_nu)
+}
+
 #' COM-Poisson rejection sampling
 #'
 #' @param n number of samples
 #' @param mu location parameter
 #' @param nu dispersion parameter
-#' @output integer vector
+#' @return integer vector
 rcompois <- function(n, mu, nu) {
     .Call(`_cpbayes_rcompois`, n, mu, nu)
 }

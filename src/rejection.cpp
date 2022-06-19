@@ -26,7 +26,7 @@ NumericVector log_bound(double mu, double nu, double p){
 //' @param n number of samples
 //' @param mu location parameter
 //' @param nu dispersion parameter
-//' @output integer vector
+//' @return integer vector
 // [[Rcpp::export]]
 NumericVector rcompois(int n, double mu, double nu){
   

@@ -106,6 +106,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// exchange_reg
+List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y, arma::mat& X_mu, arma::mat& X_nu, int burn_in, int n_iter, arma::vec& sigma_mu, arma::vec& sigma_nu, List hyperparams_mu, List hyperparams_nu);
+RcppExport SEXP _cpbayes_exchange_reg(SEXP beta_mu_initSEXP, SEXP beta_nu_initSEXP, SEXP ySEXP, SEXP X_muSEXP, SEXP X_nuSEXP, SEXP burn_inSEXP, SEXP n_iterSEXP, SEXP sigma_muSEXP, SEXP sigma_nuSEXP, SEXP hyperparams_muSEXP, SEXP hyperparams_nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_mu_init(beta_mu_initSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_nu_init(beta_nu_initSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_mu(X_muSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_nu(X_nuSEXP);
+    Rcpp::traits::input_parameter< int >::type burn_in(burn_inSEXP);
+    Rcpp::traits::input_parameter< int >::type n_iter(n_iterSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type sigma_mu(sigma_muSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type sigma_nu(sigma_nuSEXP);
+    Rcpp::traits::input_parameter< List >::type hyperparams_mu(hyperparams_muSEXP);
+    Rcpp::traits::input_parameter< List >::type hyperparams_nu(hyperparams_nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(exchange_reg(beta_mu_init, beta_nu_init, y, X_mu, X_nu, burn_in, n_iter, sigma_mu, sigma_nu, hyperparams_mu, hyperparams_nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcompois
 NumericVector rcompois(int n, double mu, double nu);
 RcppExport SEXP _cpbayes_rcompois(SEXP nSEXP, SEXP muSEXP, SEXP nuSEXP) {
@@ -127,6 +148,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpbayes_proposal_normal", (DL_FUNC) &_cpbayes_proposal_normal, 3},
     {"_cpbayes_update_beta_mu", (DL_FUNC) &_cpbayes_update_beta_mu, 8},
     {"_cpbayes_update_beta_nu", (DL_FUNC) &_cpbayes_update_beta_nu, 8},
+    {"_cpbayes_exchange_reg", (DL_FUNC) &_cpbayes_exchange_reg, 11},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
     {NULL, NULL, 0}
 };
