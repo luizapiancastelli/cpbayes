@@ -1,3 +1,4 @@
 useDynLib(cpbayes, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
+importFrom("stats", "model.frame", "model.matrix", "model.response")
 exportPattern("^[[:alpha:]]+")
