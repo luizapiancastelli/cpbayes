@@ -30,8 +30,10 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
     hyperparams = list('shape' = c(prior_mu$shape, prior_nu$shape),'rate' =  c(prior_mu$rate, prior_nu$rate))
     sigma = c(0.1, 0.1)
     
-    mcmc =exchange_noreg(y, c(1, 1), sigma, burnin, niter, hyperparams) 
-
+    mcmc_raw =exchange_noreg(y, c(1, 1), sigma, burnin, niter, hyperparams) 
+    mcmc = list("mu" = matrix(mcmc_raw$mu, ncol =1), 
+                "nu" = matrix(mcmc_raw$nu, ncol =1), 
+                'ac_rates' = mcmc_raw$ac_rates)
   }
   return(mcmc)
 }
@@ -102,5 +104,100 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
   
   class(mcmc) = 'cpbayes'
   return(mcmc)
+  
+}
+
+#' Summarise cpbayes MCMC output
+#' @importFrom magrittr %>%
+#' @importFrom dplyr summarise group_by
+#' @importFrom tidyr pivot_longer
+#' @importFrom rlang .data
+#' 
+#' @param object cpbayes object
+#' @param ... additional arguments
+summary.cpbayes = function(object, ...){
+  
+  mcmc = object
+  nchains = length(mcmc)
+  niter = nrow(mcmc[[1]]$mu)
+  
+  mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))
+  nu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "nu")))
+  
+  if(ncol(mu_chain)>1){
+    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
+  }else{
+    names(mu_chain) = 'mu'
+  }
+  if(ncol(nu_chain)>1){
+    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
+  } else{
+    names(nu_chain)='nu'
+  }
+  
+  params = cbind(mu_chain, nu_chain)
+  params$iter = 1:niter
+  params$chain = sort(rep(1:nchains, niter))
+  
+  params =pivot_longer(params, cols = -c(.data$iter,.data$chain), names_to = 'param')
+  
+  stats = params %>% group_by(.data$param)%>%  dplyr::summarise(mean = mean(.data$value), 
+                                                    "sd" = sd(.data$value),
+                                                  'Q5' = quantile(.data$value, 0.05),
+                                                  'Q50' = quantile(.data$value, 0.5),
+                                                  'Q95' = quantile(.data$value, 0.95))
+  return(stats)
+  
+}
+
+
+#' Plot cpbayes MCMC output
+#' @importFrom magrittr %>%
+#' @importFrom dplyr summarise group_by
+#' @importFrom tidyr pivot_longer
+#' @importFrom rlang .data
+#' @importFrom ggplot2 ggplot aes geom_density theme_bw facet_wrap
+#' 
+#' @param x cpbayes object
+#' @param type trace or density plot 
+#' @param ... additional arguments
+plot.cpbayes = function(x, type = "density", ...){
+  
+  mcmc = x
+  nchains = length(mcmc)
+  niter = nrow(mcmc[[1]]$mu)
+  
+  mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))
+  nu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "nu")))
+  
+  if(ncol(mu_chain)>1){
+    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
+  }else{
+    names(mu_chain) = 'mu'
+  }
+  if(ncol(nu_chain)>1){
+    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
+  } else{
+    names(nu_chain)='nu'
+  }
+  
+  params = cbind(mu_chain, nu_chain)
+  params$iter = 1:niter
+  params$chain = as.factor(sort(rep(1:nchains, niter)))
+  
+  params =pivot_longer(params, cols = -c(.data$iter,.data$chain), names_to = 'param')
+  
+  if(type == 'density'){
+  cpbayesplot = ggplot(params, aes(x = .data$value))+
+    geom_density(adjust = 5)+facet_wrap(~.data$param, scales = 'free')+
+    theme_bw()
+  }
+  if(type == "trace"){
+    cpbayesplot = ggplot(params, aes(x = .data$iter, y = .data$value, col = .data$chain))+
+      facet_wrap(~.data$param, scales = 'free')+theme_bw()+
+      geom_line()
+  }
+
+  return(cpbayesplot)
   
 }
