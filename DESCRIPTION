@@ -7,7 +7,7 @@ Author: Luiza Piancastelli
 Maintainer: Luiza Piancastelli <luiza.piancastelli@ucdconnect.ie>
 Description: COM-Poisson simulation with the fast rejection sampler. Bayesian inference for COM-Poisson regression models.
 License: GPL (>= 2)
-Imports: Rcpp (>= 1.0.8), stats, parallel, dplyr, tidyr, magrittr, rlang, ggplot2
+Imports: Rcpp (>= 1.0.8), stats, parallel, dplyr, tidyr, magrittr, rlang, ggplot2, coda
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.1
 Depends: 

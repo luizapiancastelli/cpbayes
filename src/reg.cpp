@@ -170,8 +170,8 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
   int n_beta= X_mu.n_cols; int n_nu = X_nu.n_cols;
   
   //Initialize chains and acceptance rate
-  arma::mat betamu_chain(n_iter-burn_in, n_beta);
-  arma::mat betanu_chain(n_iter-burn_in, n_nu);
+  arma::mat betamu_chain(n_iter, n_beta);
+  arma::mat betanu_chain(n_iter, n_nu);
   
   arma::vec ac_counter_mu(n_beta); 
   ac_counter_mu.zeros();
@@ -187,7 +187,7 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
   arma::vec betanu_current = beta_nu_init;
   
   int step =1;
-  while(step <= n_iter){
+  while(step <= (n_iter+burn_in)){
   //Update beta mu elements:
   for(int j =0; j < n_beta; j++){
     List update1 =  update_beta_mu(j, betamu_current, betanu_current, y, X_mu, X_nu, sigma_mu, hyperparams_mu);

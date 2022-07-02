@@ -112,6 +112,7 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
 #' @importFrom dplyr summarise group_by
 #' @importFrom tidyr pivot_longer
 #' @importFrom rlang .data
+#' @importFrom coda mcmc as.mcmc.list effectiveSize gelman.diag
 #' 
 #' @param object cpbayes object
 #' @param ... additional arguments
@@ -119,7 +120,7 @@ summary.cpbayes = function(object, ...){
   
   mcmc = object
   nchains = length(mcmc)
-  niter = nrow(mcmc[[1]]$mu)
+  niter = nrow(mcmc[[1]][[1]])
   
   mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))
   nu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "nu")))
@@ -146,6 +147,19 @@ summary.cpbayes = function(object, ...){
                                                   'Q5' = quantile(.data$value, 0.05),
                                                   'Q50' = quantile(.data$value, 0.5),
                                                   'Q95' = quantile(.data$value, 0.95))
+  mcmc_coda = list();
+  for(i in 1:nchains){
+    mcmc_coda[[i]] = coda::mcmc(cbind(mcmc[[i]][[1]],mcmc[[i]][[2]]))
+  }
+  mcmc_coda = coda::as.mcmc.list(mcmc_coda)
+  
+  neff = coda::effectiveSize(mcmc_coda)
+  if(nchains>1){
+  rhat = coda::gelman.diag(mcmc_coda)
+  stats$rhat = rhat$psrf[,1]
+  }
+  
+  stats$neff = neff
   return(stats)
   
 }
