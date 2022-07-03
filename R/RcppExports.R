@@ -94,3 +94,13 @@ rcompois <- function(n, mu, nu) {
     .Call(`_cpbayes_rcompois`, n, mu, nu)
 }
 
+#' Estimate COM-Poisson normalising constant with the fast-rejection sampler
+#'
+#' @param r number of fast-rejection sampler draws
+#' @param mu location parameter
+#' @param nu dispersion parameter
+#' @return double 
+Zhat <- function(r, mu, nu) {
+    .Call(`_cpbayes_Zhat`, r, mu, nu)
+}
+

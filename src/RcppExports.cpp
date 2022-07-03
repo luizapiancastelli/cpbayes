@@ -140,6 +140,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Zhat
+double Zhat(int r, double mu, double nu);
+RcppExport SEXP _cpbayes_Zhat(SEXP rSEXP, SEXP muSEXP, SEXP nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type r(rSEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(Zhat(r, mu, nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cpbayes_update_positive", (DL_FUNC) &_cpbayes_update_positive, 6},
@@ -150,6 +163,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpbayes_update_beta_nu", (DL_FUNC) &_cpbayes_update_beta_nu, 8},
     {"_cpbayes_exchange_reg", (DL_FUNC) &_cpbayes_exchange_reg, 11},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
+    {"_cpbayes_Zhat", (DL_FUNC) &_cpbayes_Zhat, 3},
     {NULL, NULL, 0}
 };
 
