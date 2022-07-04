@@ -78,6 +78,7 @@ NumericVector rcompois(int n, double mu, double nu){
 List rcompois_internal(int n, double mu, double nu){
   
   int n_accepts = 0;
+  int n_proposed = 0;
   NumericVector x(n);
   NumericVector B;
   
@@ -98,7 +99,8 @@ List rcompois_internal(int n, double mu, double nu){
         double y_accepted = y[0];
         x[n_accepts] = y_accepted;
         n_accepts += 1;
-      }
+      } 
+      n_proposed += 1;
       
     }
     
@@ -117,9 +119,10 @@ List rcompois_internal(int n, double mu, double nu){
         x[n_accepts] = y_accepted;
         n_accepts += 1;
       }
+      n_proposed += 1;
     }
   }
-  double Mhat = n_accepts/n;
+  double Mhat = 1.0*n_proposed/(1.0*n);
   return List::create(_["sampled"] = x, _["Mhat"] = Mhat);
 }
 
