@@ -13,6 +13,21 @@ double logqcomp(NumericVector y, double mu, double nu){
   return sum(log_q);
 }
 
+double log_inv_z(double Mhat, double mu, double nu){
+  
+  double p = 2*nu/( 2*mu*nu +1+nu );
+  double log_B= log_bound( mu,  nu,  p)[0];
+  double inv_log_z;
+  
+  if(nu>= 1){
+    inv_log_z = log(Mhat)- log_B - mu;
+  } else{
+    inv_log_z = log(Mhat) - log_B;
+  }
+  
+  return inv_log_z;
+}
+
 //' Update positive parameters in the no-regression case
 //' @param type 0 or 1: updates mu, or nu
 //' @param params c(mu, nu) vector
@@ -32,7 +47,9 @@ List update_positive(int type, NumericVector params, NumericVector y, NumericVec
   double log_prior_prime = (shape[type]-1)*log(params_prime[type]) - rate[type]*params_prime[type];
   
   //Auxiliary draws
-  NumericVector y_prime = rcompois(y.size(), params_prime[0], params_prime[1]);
+  List sampler = rcompois_internal(y.size(), params_prime[0], params_prime[1]);
+  NumericVector y_prime = sampler["sampled"];
+  double eff = sampler["Mhat"];
   
   //Unnormalised COM-Poisson likelihood
   double logq_current = logqcomp(y, params[0], params[1]);
@@ -59,7 +76,8 @@ List update_positive(int type, NumericVector params, NumericVector y, NumericVec
   }
   
   return List::create(_["params"] = params_accepted, 
-                      _["accepted"] = accept);
+                      _["accepted"] = accept,
+                      _["Mhat"] = eff);
   
 }
 
@@ -81,13 +99,16 @@ double proposal_adjust(double current_var, double accept_rate, int nprops){
 // [[Rcpp::export]]
 List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma, int n_iter, int burn_in, List hyperparams){
 
-  NumericMatrix chain(n_iter, 2); 
+  int n = y.length();
+  NumericMatrix chain(n_iter, 2); //mu, nu
+  NumericMatrix loglik(n_iter, 1); //mu, nu
   
   //Acceptance rates
   int ac_counter_mu=0; double ac_rate_mu;
   int ac_counter_nu=0; double ac_rate_nu;
   
   NumericVector params = clone(params0);
+  
   int step =1;
   while(step <= (n_iter + burn_in) ){
     
@@ -112,6 +133,7 @@ List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma,
     //Storing
     if(step > burn_in){
       chain( step-burn_in-1, _) = params;
+      loglik( step-burn_in-1, 0) =  logqcomp(y, params[0], params[1]) + n*log_inv_z(nu_update["Mhat"], params[0], params[1]);
     }
     step +=  1;
    if((step%1000) == 0){ 
@@ -122,7 +144,7 @@ List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma,
   NumericVector ac_rates(2);
   ac_rates[0] = ac_rate_mu; ac_rates[1] = ac_rate_nu;
   List output = List::create(_["mu"] = chain(_,0), _["nu"] = chain(_,1),
-                             _["ac_rates"] = ac_rates);
+                             _["ac_rates"] = ac_rates, _["loglik"] =loglik);
   
   
   return(output);

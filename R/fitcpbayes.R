@@ -33,7 +33,8 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
     mcmc_raw =exchange_noreg(y, c(1, 1), sigma, burnin, niter, hyperparams) 
     mcmc = list("mu" = matrix(mcmc_raw$mu, ncol =1), 
                 "nu" = matrix(mcmc_raw$nu, ncol =1), 
-                'ac_rates' = mcmc_raw$ac_rates)
+                'ac_rates' = mcmc_raw$ac_rates, 
+                'loglik' = mcmc_raw$loglik, 'y' = y)
   }
   return(mcmc)
 }
@@ -214,4 +215,15 @@ plot.cpbayes = function(x, type = "density", ...){
 
   return(cpbayesplot)
   
+}
+
+#' BIC information criteria 
+#' @param object cpbayes object
+#' @param ... additional arguments
+BIC.cpbayes = function(object, ...){
+  x = object
+  logliks = do.call(rbind,lapply(x, "[[", "loglik"))
+  k = ncol(x[[1]]$mu) + ncol(x[[1]]$nu)
+  bic = k*log(length(x[[1]]$y)) - 2*max(logliks)
+  return(bic)
 }
