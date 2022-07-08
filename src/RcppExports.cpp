@@ -11,6 +11,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// logqcomp
+double logqcomp(NumericVector y, double mu, double nu);
+RcppExport SEXP _cpbayes_logqcomp(SEXP ySEXP, SEXP muSEXP, SEXP nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(logqcomp(y, mu, nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // update_positive
 List update_positive(int type, NumericVector params, NumericVector y, NumericVector sigma, NumericVector shape, NumericVector rate);
 RcppExport SEXP _cpbayes_update_positive(SEXP typeSEXP, SEXP paramsSEXP, SEXP ySEXP, SEXP sigmaSEXP, SEXP shapeSEXP, SEXP rateSEXP) {
@@ -44,7 +57,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcompoisreg
-arma::vec rcompoisreg(arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu);
+List rcompoisreg(arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu);
 RcppExport SEXP _cpbayes_rcompoisreg(SEXP beta_muSEXP, SEXP beta_nuSEXP, SEXP X_muSEXP, SEXP X_nuSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -54,6 +67,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat& >::type X_mu(X_muSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type X_nu(X_nuSEXP);
     rcpp_result_gen = Rcpp::wrap(rcompoisreg(beta_mu, beta_nu, X_mu, X_nu));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logqreg_i
+NumericVector logqreg_i(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu);
+RcppExport SEXP _cpbayes_logqreg_i(SEXP ySEXP, SEXP beta_muSEXP, SEXP beta_nuSEXP, SEXP X_muSEXP, SEXP X_nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_mu(beta_muSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type beta_nu(beta_nuSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_mu(X_muSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type X_nu(X_nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(logqreg_i(y, beta_mu, beta_nu, X_mu, X_nu));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -140,6 +168,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rcompois_internal
+List rcompois_internal(int n, double mu, double nu);
+RcppExport SEXP _cpbayes_rcompois_internal(SEXP nSEXP, SEXP muSEXP, SEXP nuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type nu(nuSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcompois_internal(n, mu, nu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Zhat
 double Zhat(int r, double mu, double nu);
 RcppExport SEXP _cpbayes_Zhat(SEXP rSEXP, SEXP muSEXP, SEXP nuSEXP) {
@@ -155,14 +196,17 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_cpbayes_logqcomp", (DL_FUNC) &_cpbayes_logqcomp, 3},
     {"_cpbayes_update_positive", (DL_FUNC) &_cpbayes_update_positive, 6},
     {"_cpbayes_exchange_noreg", (DL_FUNC) &_cpbayes_exchange_noreg, 6},
     {"_cpbayes_rcompoisreg", (DL_FUNC) &_cpbayes_rcompoisreg, 4},
+    {"_cpbayes_logqreg_i", (DL_FUNC) &_cpbayes_logqreg_i, 5},
     {"_cpbayes_proposal_normal", (DL_FUNC) &_cpbayes_proposal_normal, 3},
     {"_cpbayes_update_beta_mu", (DL_FUNC) &_cpbayes_update_beta_mu, 8},
     {"_cpbayes_update_beta_nu", (DL_FUNC) &_cpbayes_update_beta_nu, 8},
     {"_cpbayes_exchange_reg", (DL_FUNC) &_cpbayes_exchange_reg, 11},
     {"_cpbayes_rcompois", (DL_FUNC) &_cpbayes_rcompois, 3},
+    {"_cpbayes_rcompois_internal", (DL_FUNC) &_cpbayes_rcompois_internal, 3},
     {"_cpbayes_Zhat", (DL_FUNC) &_cpbayes_Zhat, 3},
     {NULL, NULL, 0}
 };

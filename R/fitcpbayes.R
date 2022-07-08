@@ -22,7 +22,7 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
   ac_matrix = cbind(mcmc_raw$ac_rates_mu, mcmc_raw$ac_rates_nu)
   colnames(ac_matrix) = c('mu', 'nu')
   mcmc = list('mu' = mcmc_raw$betamu, 'nu' = mcmc_raw$betanu, 
-              'ac_rates' = ac_matrix)
+              'ac_rates' = ac_matrix, 'loglik' = mcmc_raw$loglik, 'y' = y)
   
   
   } else { #No regression case --------------------------------------------------
@@ -221,9 +221,14 @@ plot.cpbayes = function(x, type = "density", ...){
 #' @param object cpbayes object
 #' @param ... additional arguments
 BIC.cpbayes = function(object, ...){
-  x = object
-  logliks = do.call(rbind,lapply(x, "[[", "loglik"))
-  k = ncol(x[[1]]$mu) + ncol(x[[1]]$nu)
-  bic = k*log(length(x[[1]]$y)) - 2*max(logliks)
+ 
+  logliks = do.call(rbind,lapply(object, "[[", "loglik"))
+  k = ncol(object[[1]][[1]]) + ncol(object[[1]][[2]])
+  
+  if("matrix" %in% class(logliks)){
+    logliks = rowSums(logliks)
+  }
+  
+  bic = k*log(length(object[[1]]$y)) - 2*max(logliks)
   return(bic)
 }

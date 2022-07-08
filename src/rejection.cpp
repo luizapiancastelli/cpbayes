@@ -75,17 +75,20 @@ NumericVector rcompois(int n, double mu, double nu){
   return(x);
 }
 
+// [[Rcpp::export]]
 List rcompois_internal(int n, double mu, double nu){
   
   int n_accepts = 0;
   int n_proposed = 0;
   NumericVector x(n);
   NumericVector B;
+  double logZ_gamma;
   
   if(nu<1){
     
     double p = 2*nu/( 2*mu*nu +1+nu );
     B = log_bound(mu,nu,p);
+    logZ_gamma = 0.0;
     
     while(n_accepts < n) {
       NumericVector y = rgeom(1, p);
@@ -107,6 +110,7 @@ List rcompois_internal(int n, double mu, double nu){
   } else {
     
     B = log_bound(mu,nu,1);
+    logZ_gamma = mu;
     
     while(n_accepts < n) {
       
@@ -122,8 +126,12 @@ List rcompois_internal(int n, double mu, double nu){
       n_proposed += 1;
     }
   }
+  
   double Mhat = 1.0*n_proposed/(1.0*n);
-  return List::create(_["sampled"] = x, _["Mhat"] = Mhat);
+  double invZ_est = log(Mhat)- B[0] - logZ_gamma;
+  
+  return List::create(_["sampled"] = x, _["invZ_est"] = invZ_est, 
+                      _["n_proposed"] = n_proposed);
 }
 
 

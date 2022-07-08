@@ -7,25 +7,10 @@ NumericVector proposal_ln(double param, double sigma){
   return(param_prime);
 }
 
-
+// [[Rcpp::export]]
 double logqcomp(NumericVector y, double mu, double nu){
   NumericVector log_q = nu*(y*log(mu) - log(factorial(y)));
   return sum(log_q);
-}
-
-double log_inv_z(double Mhat, double mu, double nu){
-  
-  double p = 2*nu/( 2*mu*nu +1+nu );
-  double log_B= log_bound( mu,  nu,  p)[0];
-  double inv_log_z;
-  
-  if(nu>= 1){
-    inv_log_z = log(Mhat)- log_B - mu;
-  } else{
-    inv_log_z = log(Mhat) - log_B;
-  }
-  
-  return inv_log_z;
 }
 
 //' Update positive parameters in the no-regression case
@@ -49,7 +34,7 @@ List update_positive(int type, NumericVector params, NumericVector y, NumericVec
   //Auxiliary draws
   List sampler = rcompois_internal(y.size(), params_prime[0], params_prime[1]);
   NumericVector y_prime = sampler["sampled"];
-  double eff = sampler["Mhat"];
+  double loginvz = sampler["invZ_est"];
   
   //Unnormalised COM-Poisson likelihood
   double logq_current = logqcomp(y, params[0], params[1]);
@@ -77,7 +62,7 @@ List update_positive(int type, NumericVector params, NumericVector y, NumericVec
   
   return List::create(_["params"] = params_accepted, 
                       _["accepted"] = accept,
-                      _["Mhat"] = eff);
+                      _["loginvz"] = loginvz);
   
 }
 
@@ -99,7 +84,7 @@ double proposal_adjust(double current_var, double accept_rate, int nprops){
 // [[Rcpp::export]]
 List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma, int n_iter, int burn_in, List hyperparams){
 
-  int n = y.length();
+  int n = y.length(); double loginvz;
   NumericMatrix chain(n_iter, 2); //mu, nu
   NumericMatrix loglik(n_iter, 1); //mu, nu
   
@@ -126,6 +111,7 @@ List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma,
     
     params= nu_update["params"];
     ac_counter_nu += int(nu_update["accepted"]);
+    loginvz = nu_update["loginvz"];
     
     ac_rate_nu = (1.0*ac_counter_nu)/(1.0*step);
     sigma[1] = proposal_adjust(sigma[1], ac_rate_nu, step);
@@ -133,7 +119,7 @@ List exchange_noreg(NumericVector y, NumericVector params0, NumericVector sigma,
     //Storing
     if(step > burn_in){
       chain( step-burn_in-1, _) = params;
-      loglik( step-burn_in-1, 0) =  logqcomp(y, params[0], params[1]) + n*log_inv_z(nu_update["Mhat"], params[0], params[1]);
+      loglik( step-burn_in-1, 0) =  logqcomp(y, params[0], params[1]) + n*loginvz;
     }
     step +=  1;
    if((step%1000) == 0){ 

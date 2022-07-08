@@ -11,17 +11,21 @@ using namespace Rcpp;
 //' @param X_mu model matrix for mu (first column=1: intercept)
 //' @param X_nu model matrix for nu (first column=1: intercept)
 // [[Rcpp::export]]
-arma::vec rcompoisreg(arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu){
+List rcompoisreg(arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu){
 
   arma::mat mu = exp( beta_mu.as_row()*X_mu.t());
   arma::mat nu = exp( beta_nu.as_row()*X_nu.t());
   
   int n =X_mu.n_rows;
   arma::vec y_sample(n);
+  arma::vec loginvz(n);
+  List sampler;
   for(int i =0; i< n; i ++){
-    y_sample[i] =  rcompois(1, mu[i], nu[i])[0];
+    sampler = rcompois_internal(1, mu[i], nu[i]);
+    y_sample[i] =  sampler["sampled"];
+    loginvz[i] = sampler["invZ_est"];
   }
-  return y_sample;
+  return List::create(_["y"]= y_sample, _["loginvz"] = loginvz);
 }
 
 
@@ -40,7 +44,23 @@ List logqregression(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::
   return List::create(_["mu"] = mu_term,
                     _["nu"] = nu_term);
 }
+
+//' Return vector of log-q terms per data observation
+// [[Rcpp::export]]
+NumericVector logqreg_i(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu){
   
+  arma::mat mu = exp( beta_mu.as_row()*X_mu.t());
+  arma::mat nu = exp( beta_nu.as_row()*X_nu.t());
+  
+  NumericVector mu_nv = as<NumericVector>(wrap(mu));
+  NumericVector nu_nv = as<NumericVector>(wrap(nu));
+  NumericVector y_nv = as<NumericVector>(wrap(y));
+  
+  NumericVector i_term = (nu_nv*y_nv)*log(mu_nv) -nu_nv*log(factorial(y_nv));
+  
+  return i_term;
+}
+
 //' Normal proposal
 //' @param index starting from 0, the parameter to propose
 //' @param param vector
@@ -73,7 +93,9 @@ List update_beta_mu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
   double log_prior_prime = -pow( (beta_mu_prime[index] - prior_mean)/prior_sd, 2)/(2*prior_sd);
   
   //Exchange draw:
-  arma::vec y_prime = rcompoisreg(beta_mu_prime, beta_nu, X_mu, X_nu);
+  List sampler =rcompoisreg(beta_mu_prime, beta_nu, X_mu, X_nu);
+  arma::vec y_prime = sampler["y"];
+  arma::vec loginvz = sampler["loginvz"];
   
   double logq_current = logqregression(y, beta_mu, beta_nu, X_mu, X_nu)["mu"];
   double logq_prime = logqregression(y, beta_mu_prime, beta_nu, X_mu, X_nu)["mu"];
@@ -99,7 +121,8 @@ List update_beta_mu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
   }
   
   return List::create(_["beta_mu"] = beta_mu_accepted, 
-                      _["accepted"] = accept);
+                      _["accepted"] = accept, 
+                      _["loginvz"] = loginvz);
 }
 
 //' Exchange move for dispersion regression parameters
@@ -122,7 +145,9 @@ List update_beta_nu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
   double log_prior_prime = -pow( (beta_nu_prime[index] - prior_mean)/prior_sd, 2)/(2*prior_sd);
   
   //Exchange draw:
-  arma::vec y_prime = rcompoisreg(beta_mu, beta_nu_prime, X_mu, X_nu);
+  List sampler = rcompoisreg(beta_mu, beta_nu_prime, X_mu, X_nu);
+  arma::vec y_prime = sampler["y"];
+  arma::vec loginvz = sampler["loginvz"];
   
   double logq_current = logqregression(y, beta_mu, beta_nu, X_mu, X_nu)["nu"];
   double logq_prime = logqregression(y, beta_mu, beta_nu_prime, X_mu, X_nu)["nu"];
@@ -148,9 +173,9 @@ List update_beta_nu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
   }
   
   return List::create(_["beta_nu"] = beta_nu_accepted, 
-                      _["accepted"] = accept);
+                      _["accepted"] = accept,
+                      _["loginvz"] = loginvz);
 }
-
 
 //' MCMC: regression case
 //' @param beta_mu_init initial beta_mu
@@ -167,7 +192,8 @@ List update_beta_nu(int index, arma::vec& beta_mu, arma::vec& beta_nu, arma::vec
 // [[Rcpp::export]]
 List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y, arma::mat& X_mu, arma::mat& X_nu, int burn_in, int n_iter, arma::vec& sigma_mu, arma::vec& sigma_nu, List hyperparams_mu,  List hyperparams_nu){
   
-  int n_beta= X_mu.n_cols; int n_nu = X_nu.n_cols;
+  int n_beta= X_mu.n_cols; int n_nu = X_nu.n_cols; int n = X_mu.n_rows;
+  arma::mat loglik(n_iter, n); 
   
   //Initialize chains and acceptance rate
   arma::mat betamu_chain(n_iter, n_beta);
@@ -186,11 +212,13 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
   arma::vec betamu_current = beta_mu_init;
   arma::vec betanu_current = beta_nu_init;
   
+  List update1; List update2; arma::vec loginvz; arma::vec logq_i;
+  
   int step =1;
   while(step <= (n_iter+burn_in)){
   //Update beta mu elements:
   for(int j =0; j < n_beta; j++){
-    List update1 =  update_beta_mu(j, betamu_current, betanu_current, y, X_mu, X_nu, sigma_mu, hyperparams_mu);
+    update1 =  update_beta_mu(j, betamu_current, betanu_current, y, X_mu, X_nu, sigma_mu, hyperparams_mu);
     betamu_current =  as<arma::vec>(update1["beta_mu"]);
     
     ac_counter_mu[j] += int(update1["accepted"]);
@@ -202,7 +230,7 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
   
   //Update beta nu elements:
   for(int k =0; k < n_nu; k++){
-    List update2 =  update_beta_nu(k, betamu_current, betanu_current, y, X_mu, X_nu, sigma_nu, hyperparams_nu);
+    update2 =  update_beta_nu(k, betamu_current, betanu_current, y, X_mu, X_nu, sigma_nu, hyperparams_nu);
     betanu_current =  as<arma::vec>(update2["beta_nu"]);
     
     ac_counter_nu[k] += int(update2["accepted"]);
@@ -211,10 +239,16 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
     sigma_nu[k] = proposal_adjust(sigma_nu[k], ac_rate_nu[k], step);
   }
   
+  loginvz =  as<arma::vec>(update2["loginvz"]);
+  logq_i=  as<arma::vec>(logqreg_i(y, betamu_current, betanu_current,X_mu, X_nu));
+  
+  arma::vec ll_iter = loginvz + logq_i;
+    
   //Storing
   if(step > burn_in){
     betamu_chain.row(step-burn_in-1) = betamu_current.as_row();
     betanu_chain.row(step-burn_in-1) = betanu_current.as_row();
+    loglik.row(step-burn_in - 1) = ll_iter.as_row();
   }
   step +=  1;
   if((step%1000) == 0){ 
@@ -225,7 +259,8 @@ List exchange_reg(arma::vec& beta_mu_init, arma::vec& beta_nu_init, arma::vec& y
   List output = List::create(_["betamu"] = betamu_chain, 
                              _["betanu"] = betanu_chain,
                              _["ac_rates_mu"] = ac_rate_mu,
-                             _["ac_rates_nu"] = ac_rate_nu);
+                             _["ac_rates_nu"] = ac_rate_nu,
+                             _["loglik"] = loglik);
   
   
   return(output);
