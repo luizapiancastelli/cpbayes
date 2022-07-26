@@ -46,7 +46,6 @@ List logqregression(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::
 }
 
 //' Return vector of log-q terms per data observation
-// [[Rcpp::export]]
 NumericVector logqreg_i(arma::vec& y, arma::vec& beta_mu, arma::vec& beta_nu, arma::mat& X_mu, arma::mat& X_nu){
   
   arma::mat mu = exp( beta_mu.as_row()*X_mu.t());

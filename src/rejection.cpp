@@ -21,12 +21,48 @@ NumericVector log_bound(double mu, double nu, double p){
   return(B);
 }
 
-//' COM-Poisson rejection sampling
+//' COM-Poisson distribution
+//' 
+//' Exact sampling, approximate density, distribution and quantile computation.
+//' 
+//' @param n Integer. Number of observations.
+//' @param mu Numeric value. Location parameter, \eqn{\mu >0}.
+//' @param nu Numeric value. Dispersion parameter, \eqn{\nu >0}.
+//' @return Integer count vector of \code{n} independent draws.
 //'
-//' @param n number of samples
-//' @param mu location parameter
-//' @param nu dispersion parameter
-//' @return integer vector
+//' @details The COM-Poisson distribution has density 
+//' \deqn{f(y|\mu, \nu) = (\mu^y/y!)^\nu 1/Z(\mu, \nu) } 
+//' for \eqn{y = 0, 1, 2, ...}, where \eqn{Z(\mu, \nu) = \sum_{y=0}^\infty (\mu^y/y!)^\nu }. 
+//' 
+//' If \eqn{\nu <1} the distribution is overdispersed (\eqn{E(Y) < Var(Y)}), exhibits underdispersion if \eqn{\nu >1} or reduces to a Poisson (equidispersed) if \eqn{\nu=1}.
+//' The Geometric and Bernoulli distributions can be obtained as limiting cases. \cr 
+//' 
+//' Exact sampling \eqn{f(y|\mu, \nu)} is done with the \href{10.1214/20-BA1230}{fast-rejection sampler} sampler of Benson and Friel (2021),
+//' for which C++ implementation is provided in \code{rcompois}.
+//' 
+//' 
+//' Density, distribution and quantiles are unavailable from intractability of \eqn{Z(\mu, \nu)}
+//' and can be approximated using a truncated sum \eqn{Z(\mu, \nu) = \sum_{y=0}^T (\mu^y/y!)^\nu }.
+//' \code{dcompois}, \code{qcompois} and \code{pcompois} apply a \eqn{Z(\mu, \nu)} approximation that
+//' recursively increments \eqn{T} until difference between successive probabilities is below \eqn{10^{-5}}. \cr
+//'    
+//' Asymptotic moments of the distribution ((Shmueli et al. (2005))) are \eqn{E(Y) ~ \mu + 1/(2\nu) -1/2}, \eqn{Var(Y) ~ \mu/\nu}. 
+//' 
+//' For further details on the fast-rejection sampler, see Benson and Friel (2021).
+//' 
+//' 
+//' @examples
+//' y1 = rcompois(100, 1, 0.5) ## independent overdispersed counts
+//' y2 = rcompois(100, 2, 1) ## Poisson random draws
+//' y3 = rcompois(100, 0.5, 1.5) ## an underdispersed count vector
+//' 
+//' @references
+//' Benson, A. and Friel, N. (2021) Bayesian Inference, Model Selection and Likelihood Estimation using Fast Rejection Sampling: The Conway-Maxwell-Poisson Distribution.
+//' Bayesian Analysis (16) 905-931.
+//' 
+//' Shmueli, G., Minka, T., Kadane, J, Borle, S. and Boatwright, P. (2005) A useful distribution for fitting discrete data: Revival of the Conway-Maxwell-Poisson distribution.
+//' Journal of the Royal Statistical Society (C) (54) 127-142.
+//' @rdname compois
 // [[Rcpp::export]]
 NumericVector rcompois(int n, double mu, double nu){
   
@@ -131,7 +167,8 @@ List rcompois_internal(int n, double mu, double nu){
   double invZ_est = log(Mhat)- B[0] - logZ_gamma;
   
   return List::create(_["sampled"] = x, _["invZ_est"] = invZ_est, 
-                      _["n_proposed"] = n_proposed);
+                      _["n_proposed"] = n_proposed,
+                      _["Mhat"] = Mhat);
 }
 
 

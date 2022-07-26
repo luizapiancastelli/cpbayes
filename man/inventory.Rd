@@ -8,17 +8,14 @@
 An object of class \code{data.frame} with 3168 rows and 1 columns.
 }
 \source{
-Shmueli et al. (2005)
+Shmueli et al (2005). 
+A useful distribution for fitting discrete data: Revival of the Conway-Maxwell-Poisson distribution. 
+Journal of the Royal Statistical Society: Series C (Applied Statistics) 54(1), 127-142.
 }
 \usage{
 inventory
 }
 \description{
-Quarterly sales counts of clothing items in 3168 stores.
-}
-\references{
-Shmueli et al (2005). 
-A useful distribution for fitting discrete data: Revival of the Conway-Maxwell-Poisson distribution. 
-Journal of the Royal Statistical Society: Series C (Applied Statistics) 54(1), 127-142.
+Number of quarterly sales of a particular clothing article recorded by 3168 retailers.
 }
 \keyword{datasets}

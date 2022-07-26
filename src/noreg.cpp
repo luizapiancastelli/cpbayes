@@ -13,6 +13,27 @@ double logqcomp(NumericVector y, double mu, double nu){
   return sum(log_q);
 }
 
+
+// [[Rcpp::export]]
+double Ztrunc(double eps, double mu, double nu){
+  
+  int min_iter = 1000;
+  NumericVector y(1);
+  y[0] = 0;
+  double z = exp(logqcomp(y, mu, nu));
+  double increment = 99;
+  
+  while(increment > eps | y[0] < min_iter){
+    y[0] += 1; 
+    increment = exp(logqcomp(y, mu, nu));
+    z += increment;
+    //Rf_PrintValue(y);
+  }
+  
+  return z;
+  
+}
+
 //' Update positive parameters in the no-regression case
 //' @param type 0 or 1: updates mu, or nu
 //' @param params c(mu, nu) vector
