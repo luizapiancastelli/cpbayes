@@ -39,21 +39,72 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
   return(mcmc)
 }
 
-#' MCMC for COM-Poisson GLM
+#' Bayesian fit of COM-Poisson GLMs
+#' 
+#' \code{fitcpbayes} fits generalised linear models to COM-Poisson distributed count data, supporting
+#' regression specification in the location and dispersion parameters.
 #' 
 #' @importFrom stats model.matrix model.frame model.response
 #' 
-#' @param formula_beta regression formula for location
-#' @param formula_nu regression formula for dispersion
-#' @param data data frame 
-#' @param burnin integer. Number of iterations to discard as burn-in period.
-#' @param niter integer. Number of iterations to store.
-#' @param prior_mu optional named list with 'shape' and 'rate' if no regression on location, or 'mean' and 'sd' if running CP GLM. 
-#' Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).
-#' @param prior_nu optional named list with 'shape' and 'rate' if no regression on dispersion, or 'mean' and 'sd' if running CP GLM.
-#' Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).
-#' @param nchains integer, number of MCMC chains to run in parallel. Defaults to a single chain.
-#' @param ncores integer, number of cores to use when running parallel computation. Defaults to 2.
+#' @param formula_beta Object of class \code{\link[stats]{formula}}. Regression structure for \eqn{\mu}, the location parameter.
+#' @param formula_nu Object of class \code{\link[stats]{formula}}. Regression structure for \eqn{\nu}, the dispersion parameter.
+#' @param data Data frame containing the variables used in \code{formula_beta} and \code{formula_nu}. 
+#' @param burnin Integer. Number of iterations to discard as burn-in period.
+#' @param niter Integer. Number of iterations to store (additional to \code{burnin}).
+#' @param prior_mu optional named list with \code{shape} and \code{rate} if modelling only the intercept, 
+#' or \code{mean} and \code{sd} if any covariates in \code{formula_beta}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1. 
+#' @param prior_nu  optional named list with \code{shape} and \code{rate} if modelling only the intercept, 
+#' or \code{mean} and \code{sd} if any covariates in \code{formula_nu}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1. 
+#' See details for more information on prior specification.
+#' @param nchains Integer. Number of chains to run in parallel, defaults to a single chain.
+#' @param ncores Integer. Number of cores for parallel computation.
+#' 
+#' @return Object of class \code{cpbayes}. \code{nchains} lists, each containing the following.
+#' \describe{
+#' \item{\code{mu}}{(\code{niter} x \eqn{n_\mu}) matrix. Stored MCMC samples of parameters in \code{formula_beta}.}
+#' \item{\code{nu}}{(\code{niter} x \eqn{n_\nu}) matrix. Stored MCMC samples of parameters in \code{formula_nu}.}
+#' \item{\code{ac_rates}}{( \eqn{max( n_{\mu}, n_{\nu}) x 2}) matrix) of acceptance rates.}
+#' \item{\code{loglik}}{(\code{niter} x \eqn{n}) or (\code{niter} x \eqn{1}) matrix.
+#'  Log-likelihood values of response data \eqn{y_1, ... , y_n} at the MCMC iterations.   }
+#' \item{\code{y}}{Response data.}
+#' }
+#' 
+#' @seealso summary.cpbayes, plot.cpbayes, BIC.cpbayes, rcompois
+#' 
+#' @examples 
+#' \dontrun{
+#' burnin= 10000
+#' niter = 20000
+#'data("inventory") ## No regression in mu or nu, single MCMC chain
+#'mcmc_noreg =fitcpbayes(sales~1, sales~1, inventory, burnin, niter, nchains=1)
+#'
+#' data("takeoverbids")
+#' library(dplyr)
+#' data=  takeoverbids %>% select(numbids, whtknght, size)
+#' formula_beta = numbids ~ whtknght
+#' formula_nu = numbids ~ size
+#' #Parallel computation, regression on both parameters  
+#' mcmc_reg = fitcpbayes(formula_beta, formula_nu, data, burnin, niter, nchains =3, ncores =3)
+#'}
+#'
+#' @details
+#' MCMC for the posterior model with COM-Poisson likelihood regression of \href{10.1214/20-BA1230}{Benson and Friel (2021)} where
+#' \deqn{y_i ~ COM-Poisson(\mu_i, \nu_i)}  
+#' \eqn{\mu_i = \log( \beta_\mu  X_\mu^T)} and \eqn{\nu_i = \log( \beta_nu  X_\nu^T)}.
+#' 
+#' Covariates in the model matrices \eqn{ X_\mu}, \eqn{X_\nu} are modelled alongside intercepts, so
+#' \eqn{\beta_\mu = (\beta_{\mu,0},\beta_{\mu,1},..., \beta_{\mu,n_{\mu}} )}, and \eqn{\beta_nu = (\beta_{\nu,0},\beta_{\nu,1},..., \beta_{\nu,n_{\nu} } )}. \cr
+#' If no regression is supplied, \eqn{(\beta_\mu = (\beta_{\mu,0} )} or \eqn{(\beta_\nu = (\beta_{\nu,0} )} the parameter is modelled directly.
+#' 
+#' The exchange algorithm ...
+#' In this case the priors ...
+#' 
+#' @author Luiza Piancastelli \email{luiza.piancastelli@@ucdconnect.ie}
+#' 
+#' 
+#' @references
+#' Benson, A. and Friel, N. (2021) Bayesian Inference, Model Selection and Likelihood Estimation using Fast Rejection Sampling: The Conway-Maxwell-Poisson Distribution.
+#' Bayesian Analysis (16) 905-931.
 #' @export
 fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, prior_nu, nchains, ncores){
   
