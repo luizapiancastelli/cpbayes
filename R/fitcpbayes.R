@@ -12,14 +12,18 @@
 fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
   
 
-  #### Regression case  ----------------------------------------------------------
+  #### Regression case (in either)  ----------------------------------------------------------
   if(ncol(X_mu) + ncol(X_nu) >2){
   
   sigma_mu = rep(0.1, ncol(X_mu))
   sigma_nu = rep(0.2, ncol(X_nu))
   
   mcmc_raw = exchange_reg( c(log(mean(y)), rep(0, ncol(X_mu)-1)),  c(0.1, rep(0, ncol(X_nu)-1)), y, X_mu, X_nu, burnin, niter, sigma_mu, sigma_nu, prior_mu, prior_nu)
-  ac_matrix = cbind(mcmc_raw$ac_rates_mu, mcmc_raw$ac_rates_nu)
+  
+  ac_matrix = matrix(NA, nrow = max(c(ncol(X_mu), ncol(X_nu))), ncol=2)
+  ac_matrix[1:ncol(X_mu),1] = mcmc_raw$ac_rates_mu
+  ac_matrix[1:ncol(X_nu),2] = mcmc_raw$ac_rates_nu
+  
   colnames(ac_matrix) = c('mu', 'nu')
   mcmc = list('mu' = mcmc_raw$betamu, 'nu' = mcmc_raw$betanu, 
               'ac_rates' = ac_matrix, 'loglik' = mcmc_raw$loglik, 'y' = y)
@@ -115,11 +119,13 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
   if(ncol(X_mu) + ncol(X_nu) >2){ #Regression case -------------
     
     if(missing(prior_mu)){
-      prior_mu = list('mean'=0, 'sd'=1)
-    }
+        prior_mu = list('mean'=0, 'sd'=1)
+      }
+    
     if(missing(prior_nu)){
       prior_nu = list('mean'=0, 'sd'=1)
-    }
+      }
+    
     
   } else { #No regression ---------------------------------------
     
@@ -177,15 +183,12 @@ summary.cpbayes = function(object, ...){
   mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))
   nu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "nu")))
   
-  if(ncol(mu_chain)>1){
-    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
-  }else{
+  if(ncol(mu_chain)==1 & ncol(nu_chain)==1){
     names(mu_chain) = 'mu'
-  }
-  if(ncol(nu_chain)>1){
-    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
-  } else{
     names(nu_chain)='nu'
+  } else {
+    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
+    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
   }
   
   params = cbind(mu_chain, nu_chain)
@@ -236,15 +239,12 @@ plot.cpbayes = function(x, type = "density", ...){
   mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))
   nu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "nu")))
   
-  if(ncol(mu_chain)>1){
-    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
-  }else{
+  if(ncol(mu_chain)==1 & ncol(nu_chain)==1){
     names(mu_chain) = 'mu'
-  }
-  if(ncol(nu_chain)>1){
-    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
-  } else{
     names(nu_chain)='nu'
+  } else {
+    names(mu_chain)= paste0('betamu', 1:ncol(mu_chain))
+    names(nu_chain)= paste0('betanu', 1:ncol(nu_chain))
   }
   
   params = cbind(mu_chain, nu_chain)
