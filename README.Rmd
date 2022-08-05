@@ -34,20 +34,22 @@ Y = rcompois(n =100, mu =1, nu = 0.5)
 
 ### COM-Poisson regression
 
-Function `fitcpbayes` fits a COM-Poisson GLM and a quick check of its arguments is rendered by `help("fitcpbayes")` (please note that documentation is under development!). The code below provides and example of its usage with the `takeoverbids` data set (model 4 in (Benson and Friel (2021)) ) and some methods currently available.
+Function `fitcpbayes` fits a COM-Poisson GLM and a quick check of its arguments is rendered by `help("fitcpbayes")` (documentation under development!). The code below provides and example of its usage with the `takeoverbids` data set (model 4 in (Benson and Friel (2021)) ) and some methods currently available.
 
 ```{r}
 #help("fitcpbayes")
-
 data("takeoverbids")
 
 mcmc = fitcpbayes(numbids ~ whtknght, numbids ~ size, takeoverbids, 10000, 10000, nchains =3)
 
-summary(mcmc)
+summary(mcmc) #Gives the number of efficient draws neff and scale reduction factors Rhat
+```
+```{r}
 plot(mcmc)
-
+plot(mcmc, type = 'trace')
 ```
 
-
-
+```{r}
+BIC(mcmc)
+```
 

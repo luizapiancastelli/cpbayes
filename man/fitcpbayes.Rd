@@ -27,12 +27,10 @@ fitcpbayes(
 
 \item{niter}{Integer. Number of iterations to store (additional to \code{burnin}).}
 
-\item{prior_mu}{optional named list with \code{shape} and \code{rate} if modelling only the intercept, 
-or \code{mean} and \code{sd} if any covariates in \code{formula_beta}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1.}
+\item{prior_mu}{optional named list with \code{shape} and \code{rate} if no regression in \eqn{\mu} nor \eqn{\nu} or
+containing \code{mean} and \code{sd}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1.}
 
-\item{prior_nu}{optional named list with \code{shape} and \code{rate} if modelling only the intercept, 
-or \code{mean} and \code{sd} if any covariates in \code{formula_nu}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1. 
-See details for more information on prior specification.}
+\item{prior_nu}{equivalent to \code{prior_nu}, for \eqn{\nu}. See details section for more information on prior specification.}
 
 \item{nchains}{Integer. Number of chains to run in parallel, defaults to a single chain.}
 
@@ -51,19 +49,35 @@ Object of class \code{cpbayes}. \code{nchains} lists, each containing the follow
 }
 \description{
 \code{fitcpbayes} fits generalised linear models to COM-Poisson distributed count data, supporting
-regression specification in the location and dispersion parameters.
+regression specification in the location and dispersion.
 }
 \details{
-MCMC for the posterior model with COM-Poisson likelihood regression of \href{10.1214/20-BA1230}{Benson and Friel (2021)} where
+\bold{COM-Poisson GLM}
+Assumes the COM-Poisson regression structure specified by \href{10.1214/20-BA1230}{Benson and Friel (2021)} where
 \deqn{y_i ~ COM-Poisson(\mu_i, \nu_i)}  
-\eqn{\mu_i = \log( \beta_\mu  X_\mu^T)} and \eqn{\nu_i = \log( \beta_nu  X_\nu^T)}.
+and \eqn{\mu_i = \log( \beta_\mu  X_\mu^T)}, \eqn{\nu_i = \log( \beta_nu  X_\nu^T)}.
+Covariate data is included in the model matrices \eqn{ X_\mu}, \eqn{X_\nu} parsed with \code{\link[stats]{formula}} and
+\eqn{\beta_\mu = (\beta_{\mu,0},\beta_{\mu,1},..., \beta_{\mu,n_{\mu}} )}, and \eqn{\beta_nu = (\beta_{\nu,0},\beta_{\nu,1},..., \beta_{\nu,n_{\nu} } )}.
 
-Covariates in the model matrices \eqn{ X_\mu}, \eqn{X_\nu} are modelled alongside intercepts, so
-\eqn{\beta_\mu = (\beta_{\mu,0},\beta_{\mu,1},..., \beta_{\mu,n_{\mu}} )}, and \eqn{\beta_nu = (\beta_{\nu,0},\beta_{\nu,1},..., \beta_{\nu,n_{\nu} } )}. \cr
-If no regression is supplied, \eqn{(\beta_\mu = (\beta_{\mu,0} )} or \eqn{(\beta_\nu = (\beta_{\nu,0} )} the parameter is modelled directly.
+The likelihood of count observations \eqn{y_i} given \eqn{\mu_i}, \eqn{\nu_i} is then
+\deqn{f(y_i|\mu_i, \nu_i) = (\mu_i^y_i/y_i!)^\nu_i 1/Z(\mu_i, \nu_i) } 
+where \eqn{Z(\mu_i, \nu_i) = \sum_{y=0}^\infty (\mu_i^y_i/y_i!)^\nu_i } is an intractable normalisation constant. 
 
-The exchange algorithm ...
-In this case the priors ...
+\bold{Markov Chain Monte Carlo}
+Sampling the posterior model parameters is done with the exchange algorithm (Murray, Ghahramani and Ghahramani (2006)),
+an approach for doubly-intractable Bayesian inference that overcomes unavailability of the likelihood's normalising 
+constant via introduction of auxiliary draws from the intractable distribution.
+
+The augmented posterior model is
+\deqn{\pi(\beta_{\mu}, \beta_{\nu}, \beta_{\mu}', \beta_{\nu}', y'| y) \propto f(y|\beta_{\mu}, \beta_{\nu}) f(y'|\beta_{\mu}', \beta_{\nu}')\pi(\beta_{\mu})\pi(\beta_{\nu})h(\beta_mu, \beta_mu')h(\beta_nu, \beta_nu') } 
+where \eqn{\pi(\beta_{\mu}) = \prod_{i=1}^{n_{\mu}} \pi(\beta_{\mu, i}|} \code{mean}, \code{sd}) and \eqn{\pi(\beta_{\nu}) = \prod_{i=1}^{n_{\nu}} \pi(\beta_{\nu, i}|} \code{mean}, \code{sd}) are
+the prior distributions of \eqn{\beta_{\mu}}, \eqn{\beta_{\nu}} elements. 
+
+Values \eqn{y'} sampled using \code{\link{rcompois}}...
+
+\emph{Prior details:}
+If no regression is supplied for either, the intercepts \eqn{\beta_{\mu,0}}, \eqn{\beta_{\nu,0}} are modeled directly. That is, inference is done for
+\eqn{\mu>0} and \eqn{\nu >0} instead of \eqn{exp(\beta_{\mu,0})} and  \eqn{exp(\beta_{\nu,0})}.
 }
 \examples{
 \dontrun{
@@ -85,6 +99,9 @@ mcmc_reg = fitcpbayes(formula_beta, formula_nu, data, burnin, niter, nchains =3,
 \references{
 Benson, A. and Friel, N. (2021) Bayesian Inference, Model Selection and Likelihood Estimation using Fast Rejection Sampling: The Conway-Maxwell-Poisson Distribution.
 Bayesian Analysis (16) 905-931.
+
+Murray, I., Ghahramani, Z. and MacKay, D. (2006) MCMC for doubly-intractable distributions.
+Proceedings of the 22nd Annual Conference on Uncertainty in Artificial Intelligence (UAI-06), AUAI Press.
 }
 \seealso{
 summary.cpbayes, plot.cpbayes, BIC.cpbayes, rcompois
