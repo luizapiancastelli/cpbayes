@@ -17,9 +17,9 @@ fitcpbayes(
 )
 }
 \arguments{
-\item{formula_beta}{Object of class \code{\link[stats]{formula}}. Regression structure for \eqn{\mu}, the location parameter.}
+\item{formula_beta}{Object of class \code{formula}. Regression structure for \eqn{\mu}, the location parameter.}
 
-\item{formula_nu}{Object of class \code{\link[stats]{formula}}. Regression structure for \eqn{\nu}, the dispersion parameter.}
+\item{formula_nu}{Object of class \code{formula}. Regression structure for \eqn{\nu}, the dispersion parameter.}
 
 \item{data}{Data frame containing the variables used in \code{formula_beta} and \code{formula_nu}.}
 
@@ -27,10 +27,10 @@ fitcpbayes(
 
 \item{niter}{Integer. Number of iterations to store (additional to \code{burnin}).}
 
-\item{prior_mu}{optional named list with \code{shape} and \code{rate} if no regression in \eqn{\mu} nor \eqn{\nu} or
-containing \code{mean} and \code{sd}. Default values are \code{shape} =2, \code{rate} =2, and \code{mean} =0, \code{sd} =1.}
+\item{prior_mu}{Named list. Optional argument with \code{mean} and \code{sd} hyperparameters of Normal prior. Unless there is no regression structure, 
+in which case \code{shape} =2, \code{rate} =2 is expected.}
 
-\item{prior_nu}{equivalent to \code{prior_nu}, for \eqn{\nu}. See details section for more information on prior specification.}
+\item{prior_nu}{Named list. Equivalent to \code{prior_mu} for the dispersion regression. See details section for more information on prior specification.}
 
 \item{nchains}{Integer. Number of chains to run in parallel, defaults to a single chain.}
 
@@ -49,35 +49,50 @@ Object of class \code{cpbayes}. \code{nchains} lists, each containing the follow
 }
 \description{
 \code{fitcpbayes} fits generalised linear models to COM-Poisson distributed count data, supporting
-regression specification in the location and dispersion.
+regression in the location and dispersion parameters.
 }
 \details{
-\bold{COM-Poisson GLM}
+\bold{COM-Poisson regression}\cr
 Assumes the COM-Poisson regression structure specified by \href{10.1214/20-BA1230}{Benson and Friel (2021)} where
 \deqn{y_i ~ COM-Poisson(\mu_i, \nu_i)}  
 and \eqn{\mu_i = \log( \beta_\mu  X_\mu^T)}, \eqn{\nu_i = \log( \beta_nu  X_\nu^T)}.
-Covariate data is included in the model matrices \eqn{ X_\mu}, \eqn{X_\nu} parsed with \code{\link[stats]{formula}} and
+Covariate data is included in the model matrices \eqn{ X_\mu}, \eqn{X_\nu} parsed with \code{formula} and
 \eqn{\beta_\mu = (\beta_{\mu,0},\beta_{\mu,1},..., \beta_{\mu,n_{\mu}} )}, and \eqn{\beta_nu = (\beta_{\nu,0},\beta_{\nu,1},..., \beta_{\nu,n_{\nu} } )}.
 
 The likelihood of count observations \eqn{y_i} given \eqn{\mu_i}, \eqn{\nu_i} is then
 \deqn{f(y_i|\mu_i, \nu_i) = (\mu_i^y_i/y_i!)^\nu_i 1/Z(\mu_i, \nu_i) } 
 where \eqn{Z(\mu_i, \nu_i) = \sum_{y=0}^\infty (\mu_i^y_i/y_i!)^\nu_i } is an intractable normalisation constant. 
 
-\bold{Markov Chain Monte Carlo}
+\bold{Markov Chain Monte Carlo}\cr
 Sampling the posterior model parameters is done with the exchange algorithm (Murray, Ghahramani and Ghahramani (2006)),
 an approach for doubly-intractable Bayesian inference that overcomes unavailability of the likelihood's normalising 
 constant via introduction of auxiliary draws from the intractable distribution.
 
 The augmented posterior model is
-\deqn{\pi(\beta_{\mu}, \beta_{\nu}, \beta_{\mu}', \beta_{\nu}', y'| y) \propto f(y|\beta_{\mu}, \beta_{\nu}) f(y'|\beta_{\mu}', \beta_{\nu}')\pi(\beta_{\mu})\pi(\beta_{\nu})h(\beta_mu, \beta_mu')h(\beta_nu, \beta_nu') } 
-where \eqn{\pi(\beta_{\mu}) = \prod_{i=1}^{n_{\mu}} \pi(\beta_{\mu, i}|} \code{mean}, \code{sd}) and \eqn{\pi(\beta_{\nu}) = \prod_{i=1}^{n_{\nu}} \pi(\beta_{\nu, i}|} \code{mean}, \code{sd}) are
-the prior distributions of \eqn{\beta_{\mu}}, \eqn{\beta_{\nu}} elements. 
+\deqn{\pi(\beta_\mu, \beta_\nu, \beta_\mu', \beta_\nu', y'| y) \propto f(y|\beta_\mu, \beta_\nu) f(y'|\beta_\mu', \beta_\nu')\pi(\beta_\mu)\pi(\beta_\nu)h(\beta_mu'|\beta_\mu)h(\beta_nu'|\beta_nu) } 
+where \eqn{\pi(\beta_\mu) = \prod_{i=1}^{n_\mu} \pi(\beta_{\mu, i}|} \code{mean}, \code{sd}) and \eqn{\pi(\beta_\nu) = \prod_{j=1}^{n_\nu} \pi(\beta_{\nu, j}|} \code{mean}, \code{sd}) are
+the prior distributions of \eqn{\beta_\mu}, \eqn{\beta_\nu} elements. \cr
+The auxiliary likelihood draws \eqn{y'} are sampled using \code{\link{rcompois}} with parameters \eqn{\beta_\mu'}, \eqn{\beta_\nu'}
+proposed according to \eqn{h(\beta_{mu', i}|\beta_{mu, i}) = h(\beta_{nu', j}|\beta_{nu,j})}. Specifically, \eqn{h(\beta_{\mu', i}|\beta_{\mu, i} \equiv} 
+Normal(\eqn{\beta_{\mu,i}, \sigma_{\mu,i}}) for \eqn{i=1, ..., n_\mu}, and similarly \eqn{h(\beta_{\nu, j}, \beta_{\nu', j})} ~
+Normal(\eqn{\beta_{\nu,j}, \sigma_{\nu, j}}) for \eqn{j=1, ..., n_\nu}. \cr
 
-Values \eqn{y'} sampled using \code{\link{rcompois}}...
 
-\emph{Prior details:}
-If no regression is supplied for either, the intercepts \eqn{\beta_{\mu,0}}, \eqn{\beta_{\nu,0}} are modeled directly. That is, inference is done for
-\eqn{\mu>0} and \eqn{\nu >0} instead of \eqn{exp(\beta_{\mu,0})} and  \eqn{exp(\beta_{\nu,0})}.
+An automatic vanishing calibration of \eqn{\sigma_{\mu,i}} and \eqn{\sigma_{\nu, j}} proposal variabilities is implemented targetting 
+the rule of thumb acceptance rate of 44\% to accept/reject proposed values appropriately. \cr
+
+The prior distribution on location regressor effects are \eqn{\pi(\beta_{\mu, i}|} \code{mean}, \code{sd}) for all \eqn{i} with
+the \code{mean}, \code{sd} values supplied in \code{prior_mu}. Default values are \code{mean} =0, \code{sd} =1. Equivalently
+for the dispersion regression \eqn{\pi(\beta_{\nu, j}|} \code{mean}, \code{sd}) priors are Normally distributed with the \code{mean} and \code{sd}
+provided in the \code{prior_nu} list, that also defaults to \code{mean} =0, \code{sd} =1. \cr
+
+\bold{No regression case}\cr
+The case of no regression, i.e, \eqn{n_\mu = n_\nu =0} is treated as a special case, avoiding the logarithm link and updating
+\eqn{\mu>0} and \eqn{\nu >0} in place of \eqn{exp(\beta_{\mu,0})} and  \eqn{exp(\beta_{\nu,0})}. The same algorithmic strategy applies
+with a change in the \emph{proposal and prior distributions}. Candidate \eqn{\mu}, \eqn{\nu} values are simulated from log-Normal distributions
+with median given by the current parameter state and scale parameters \eqn{\sigma_\mu}, \eqn{\sigma_\nu}. That is, \eqn{h(\mu'|\mu)},\eqn{h(\nu'|\nu)}
+are log-Normal(\eqn{\log(\mu), \sigma_\mu}), log-Normal(\eqn{\log(\nu), \sigma_\nu}). The change in prior specification acommodating \eqn{\mu>0} and \eqn{\nu >0} 
+is to \eqn{\pi(\mu)} ~ Gamma(\code{shape}, \code{rate}) with \code{prior_mu} hyperparameters and also for \eqn{\pi(\nu)}, with \code{shape} and \code{rate} in \code{prior_nu}.
 }
 \examples{
 \dontrun{

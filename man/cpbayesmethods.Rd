@@ -19,7 +19,7 @@
 \item{type}{trace or density plot}
 }
 \description{
-Plotting and summarising \code{\link[stats]{methods}} for \code{cpbayes} objects obtaining with \code{\link{fitcpbayes}}.
+Plotting and summarising \code{methods} for \code{cpbayes} objects obtaining with \code{\link{fitcpbayes}}.
 }
 \details{
 Summary: neff and Rhat...
