@@ -52,9 +52,9 @@ probabilities.
 Y1 = rcompois(n =200, mu =1, nu = 0.2) #nu < 1 renders overdispersed count data
 Y2 = rcompois(n =200, mu =1, nu = 1.5) #nu > 1 underdispersion
 c(mean(Y1), var(Y1))
-#> [1] 2.805000 6.127613
+#> [1] 2.765000 8.713342
 c(mean(Y2), var(Y2))
-#> [1] 0.7450000 0.5929397
+#> [1] 0.7600000 0.6255276
 #approximate mean and variance are E(Y) ~ mu + 1/2nu -1/2 and Var(Y) ~ mu/nu
 
 #P(Y = 0)
@@ -90,15 +90,17 @@ to be COM-Poisson distributed with likelihood
 
 where
 ![Z(\mu_i, \nu_i) = \sum\_{y=0}^\infty q(y_i\|\mu_i, \nu_i)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;Z%28%5Cmu_i%2C%20%5Cnu_i%29%20%3D%20%5Csum_%7By%3D0%7D%5E%5Cinfty%20q%28y_i%7C%5Cmu_i%2C%20%5Cnu_i%29 "Z(\mu_i, \nu_i) = \sum_{y=0}^\infty q(y_i|\mu_i, \nu_i)"),
-![q(y_i\|\mu_i, \nu_i) = \left( \frac{\mu_i^{y_i}}{y_i!} \right)^{\nu_i}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;q%28y_i%7C%5Cmu_i%2C%20%5Cnu_i%29%20%3D%20%5Cleft%28%20%5Cfrac%7B%5Cmu_i%5E%7By_i%7D%7D%7By_i%21%7D%20%5Cright%29%5E%7B%5Cnu_i%7D "q(y_i|\mu_i, \nu_i) = \left( \frac{\mu_i^{y_i}}{y_i!} \right)^{\nu_i}")
-and the regression
-![\mu_i = \exp \left( \beta\_{\mu,0} + \sum\_{j=1}^b \beta\_{\mu, j} x^\mu\_{ij} \right)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmu_i%20%3D%20%5Cexp%20%5Cleft%28%20%5Cbeta_%7B%5Cmu%2C0%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eb%20%5Cbeta_%7B%5Cmu%2C%20j%7D%20x%5E%5Cmu_%7Bij%7D%20%5Cright%29 "\mu_i = \exp \left( \beta_{\mu,0} + \sum_{j=1}^b \beta_{\mu, j} x^\mu_{ij} \right)")
-and
-![\nu_i = \exp \left( \beta\_{\nu,0} + \sum\_{k=1}^c \beta\_{\nu, k} x^\nu\_{ik} \right)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cnu_i%20%3D%20%5Cexp%20%5Cleft%28%20%5Cbeta_%7B%5Cnu%2C0%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5Ec%20%5Cbeta_%7B%5Cnu%2C%20k%7D%20x%5E%5Cnu_%7Bik%7D%20%5Cright%29 "\nu_i = \exp \left( \beta_{\nu,0} + \sum_{k=1}^c \beta_{\nu, k} x^\nu_{ik} \right)").
+![q(y_i\|\mu_i, \nu_i) = (\frac{\mu_i^{y_i}}{y_i!})^{\nu_i}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;q%28y_i%7C%5Cmu_i%2C%20%5Cnu_i%29%20%3D%20%28%5Cfrac%7B%5Cmu_i%5E%7By_i%7D%7D%7By_i%21%7D%29%5E%7B%5Cnu_i%7D "q(y_i|\mu_i, \nu_i) = (\frac{\mu_i^{y_i}}{y_i!})^{\nu_i}").
+
+Regression structure on the location is
+![\mu_i = \exp ( \beta\_{\mu,0} + \sum\_{j=1}^b \beta\_{\mu, j} x^\mu\_{ij} )](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmu_i%20%3D%20%5Cexp%20%28%20%5Cbeta_%7B%5Cmu%2C0%7D%20%2B%20%5Csum_%7Bj%3D1%7D%5Eb%20%5Cbeta_%7B%5Cmu%2C%20j%7D%20x%5E%5Cmu_%7Bij%7D%20%29 "\mu_i = \exp ( \beta_{\mu,0} + \sum_{j=1}^b \beta_{\mu, j} x^\mu_{ij} )")
+and similarly
+![\nu_i = \exp ( \beta\_{\nu,0} + \sum\_{k=1}^c \beta\_{\nu, k} x^\nu\_{ik} )](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cnu_i%20%3D%20%5Cexp%20%28%20%5Cbeta_%7B%5Cnu%2C0%7D%20%2B%20%5Csum_%7Bk%3D1%7D%5Ec%20%5Cbeta_%7B%5Cnu%2C%20k%7D%20x%5E%5Cnu_%7Bik%7D%20%29 "\nu_i = \exp ( \beta_{\nu,0} + \sum_{k=1}^c \beta_{\nu, k} x^\nu_{ik} )")
+for the dispersion. Here
 ![\boldsymbol{x}^\mu_1, \cdots, \boldsymbol{x}^\mu_b](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cboldsymbol%7Bx%7D%5E%5Cmu_1%2C%20%5Ccdots%2C%20%5Cboldsymbol%7Bx%7D%5E%5Cmu_b "\boldsymbol{x}^\mu_1, \cdots, \boldsymbol{x}^\mu_b")
 and
 ![\boldsymbol{x}^\nu_1, \cdots, \boldsymbol{x}^\nu_c](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cboldsymbol%7Bx%7D%5E%5Cnu_1%2C%20%5Ccdots%2C%20%5Cboldsymbol%7Bx%7D%5E%5Cnu_c "\boldsymbol{x}^\nu_1, \cdots, \boldsymbol{x}^\nu_c")
-are observed covariates accounted in
+are observed covariates to include in
 ![\mu](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cmu "\mu")
 and
 ![\nu](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cnu "\nu")
@@ -135,10 +137,10 @@ summary(mcmc) #neff is the number of efficient draws, and Rhat the potential sca
 #> # A tibble: 4 × 8
 #>   param     mean     sd     Q5    Q50    Q95  rhat  neff
 #>   <chr>    <dbl>  <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl>
-#> 1 betamu1  0.336 0.0990  0.169  0.341  0.489  1.00  520.
-#> 2 betamu2  0.450 0.108   0.275  0.448  0.628  1.00  597.
-#> 3 betanu1  0.699 0.263   0.266  0.699  1.13   1.00  897.
-#> 4 betanu2 -0.208 0.0654 -0.330 -0.200 -0.118  1.00 1084.
+#> 1 betamu1  0.343 0.101   0.166  0.350  0.496  1.01  439.
+#> 2 betamu2  0.446 0.110   0.272  0.441  0.632  1.01  610.
+#> 3 betanu1  0.721 0.267   0.283  0.720  1.16   1.00  802.
+#> 4 betanu2 -0.210 0.0669 -0.329 -0.203 -0.117  1.01 1006.
 ```
 
 ``` r
@@ -164,9 +166,9 @@ or `help("BIC")`. Let’s consider another regression structure for the
 mcmc2 = fitcpbayes(numbids ~ whtknght + bidprem, numbids ~ size, takeoverbids, 10000, 10000, nchains =3)
 
 BIC(mcmc)
-#> [1] 374.1528
+#> [1] 370.3292
 BIC(mcmc2)
-#> [1] 380.2662
+#> [1] 374.7036
 ```
 
 It looks like the data further supports `numbids ~ whtknght`
@@ -191,8 +193,8 @@ summary(mcmc3)
 #> # A tibble: 2 × 7
 #>   param  mean    sd    Q5   Q50   Q95  neff
 #>   <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1 mu    0.859 0.117 0.649 0.869  1.03  138.
-#> 2 nu    1.32  0.280 0.881 1.30   1.80  185.
+#> 1 mu    0.839 0.122 0.619 0.850  1.02  115.
+#> 2 nu    1.22  0.263 0.812 1.21   1.67  158.
 ```
 
 Looks like the true values have high posterior probability as expected!

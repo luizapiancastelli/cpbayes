@@ -61,7 +61,9 @@ $$
     f(y_i|\mu_i, \nu_i) =  \left( \dfrac{\mu_i^{y_i}}{y_i!} \right)^{\nu_i} \frac{1}{Z(\mu_i, \nu_i)}
 $$
 
-where $Z(\mu_i, \nu_i) = \sum_{y=0}^\infty q(y_i|\mu_i, \nu_i)$, $q(y_i|\mu_i, \nu_i) = \left( \frac{\mu_i^{y_i}}{y_i!} \right)^{\nu_i}$ and the regression  $\mu_i = \exp \left( \beta_{\mu,0} + \sum_{j=1}^b \beta_{\mu, j} x^\mu_{ij} \right)$ and $\nu_i = \exp \left( \beta_{\nu,0} + \sum_{k=1}^c \beta_{\nu, k} x^\nu_{ik} \right)$. $\boldsymbol{x}^\mu_1, \cdots, \boldsymbol{x}^\mu_b$ and $\boldsymbol{x}^\nu_1, \cdots, \boldsymbol{x}^\nu_c$ are observed covariates accounted in $\mu$ and $\nu$ for explaining $\boldsymbol{y}$.
+where $Z(\mu_i, \nu_i) = \sum_{y=0}^\infty q(y_i|\mu_i, \nu_i)$, $q(y_i|\mu_i, \nu_i) =  (\frac{\mu_i^{y_i}}{y_i!})^{\nu_i}$.
+
+Regression structure on the location is $\mu_i = \exp ( \beta_{\mu,0} + \sum_{j=1}^b \beta_{\mu, j} x^\mu_{ij} )$ and similarly $\nu_i = \exp ( \beta_{\nu,0} + \sum_{k=1}^c \beta_{\nu, k} x^\nu_{ik} )$ for the dispersion. Here $\boldsymbol{x}^\mu_1, \cdots, \boldsymbol{x}^\mu_b$ and $\boldsymbol{x}^\nu_1, \cdots, \boldsymbol{x}^\nu_c$ are observed covariates to include in $\mu$ and $\nu$ for explaining $\boldsymbol{y}$.
 
 The function `fitcpbayes` runs Markov Chain Monte Carlo for $\boldsymbol{\beta_\mu}, \boldsymbol{\beta_\nu}$ Bayesian inference using the exchange algorithm (Murray (2006)). Further details on the exchange framework for intractable likelihoods and arguments to `fitcpbayes` are rendered by `help("fitcpbayes")`.
 
