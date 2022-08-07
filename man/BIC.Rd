@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitcpbayes.R
 \name{BIC}
 \alias{BIC}
-\title{BIC information criteria}
+\title{BIC estimate}
 \usage{
 BIC(object, ...)
 }
@@ -12,5 +12,25 @@ BIC(object, ...)
 \item{...}{additional arguments}
 }
 \description{
-BIC information criteria
+Estimates the Bayesian Information Criteria of a \code{cpbayes} model fit.
+}
+\details{
+Exact BIC computation is not possible with a COM-Poisson likelihood model due to intractability
+of the normalisation constant \eqn{Z(\mu, \nu)}. Benson and Friel (2021) propose a statistical estimator
+for this quantity based on the acceptance rate of their rejection sampling algorithm (\code{rcompois}). 
+
+Using \eqn{\widehat{M}^{(r)} =n_r/r}, the number of envelope draws \eqn{n_r} required for \eqn{r} acceptances,
+an unbiased estimator of \eqn{1/Z(\mu, \nu)} can be obtained and \eqn{\widehat{f}^{(r)}(y|\mu, \nu)} is computed.
+Please see Section 3 of the indicated reference for more details.
+
+Obtaining an approximate BIC follows from recording the maximizer of \eqn{\widehat{f}^{(r)}(y|\mu_i, \nu_i)} for the MCMC
+iterations \eqn{i=1, 2, ...}. Note that there is no additional cost in this procedure since \code{rcompois}
+draws are part of the \code{fitcpbayes}'s posterior sampling via the exchange algorithm. 
+
+The statistical estimator for BIC is then 
+\deqn{\widehat{BIC}^{(r)} = k\log(n) - 2\max \widehat{f}^{(r)}(y|\mu, \nu).}
+}
+\references{
+Benson, A. and Friel, N. (2021) Bayesian Inference, Model Selection and Likelihood Estimation using Fast Rejection Sampling: The Conway-Maxwell-Poisson Distribution.
+Bayesian Analysis (16) 905-931.
 }

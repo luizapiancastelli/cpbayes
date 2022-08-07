@@ -204,12 +204,29 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
 
 #' Summarising COM-Poisson GLM model fits 
 #' 
-#' Plotting and summarising \code{methods} for \code{cpbayes} objects obtaining with \code{\link{fitcpbayes}}.
+#' Plotting and summarising \code{methods} for \code{cpbayes} objects obtained with \code{\link{fitcpbayes}}.
 #' 
 #' 
 #' @details 
-#' Summary: neff and Rhat...
-#' Plot: ...
+#' 
+#' The \bold{\code{summary.cpbayes}} method provides the posterior mean, standard deviation
+#' and \%5, \%50 and \%95 quantiles of \code{cpbayes} MCMC draws for each model parameter.
+#' The diagnostic tools 'number of efficient samples' \code{neff} and the 'potential scale reduction factor' \code{Rhat} (Gelman and Rubin (1992))
+#' are also provided, computed with \code{coda::effectiveSize} and \code{coda::gelman.diag}. \cr
+#' 
+#' \code{neff} is the sample size adjusted for autocorrelation of the Markov Chain. Please refer to \code{coda} for further details on computation.
+#' \code{Rhat} is included if \code{cpbayes} takes \code{nchains} >1, a convergence diagnostic tool 
+#' where values close to 1 usually indicate the multiple chains to have converged to the same stationary distribution. 
+#' 
+#' \bold{\code{plot.cpbayes}} produces posterior density plots of \code{cpbayes} model parameters if \code{type} = "density".
+#' If \code{nchains}>1 MCMC draws are combined for plotting. Traces (iteration versus parameter value) are available with \code{type} = "trace"
+#' with lines colored by chain runs. 
+#' 
+#' 
+#' @references 
+#' Gelman, A and Rubin, DB (1992) Inference from iterative simulation using multiple sequences, Statistical Science, 7, 457-511.
+#' 
+#' 
 #' 
 #' 
 #' @importFrom magrittr %>%
@@ -317,7 +334,33 @@ plot.cpbayes = function(x, type = "density", ...){
   
 }
 
-#' BIC information criteria 
+#' BIC estimate
+#' 
+#' Estimates the Bayesian Information Criteria of a \code{cpbayes} model fit.
+#' 
+#' @details 
+#' 
+#' Exact BIC computation is not possible with a COM-Poisson likelihood model due to intractability
+#' of the normalisation constant \eqn{Z(\mu, \nu)}. Benson and Friel (2021) propose a statistical estimator
+#' for this quantity based on the acceptance rate of their rejection sampling algorithm (\code{rcompois}). 
+#' 
+#' Using \eqn{\widehat{M}^{(r)} =n_r/r}, the number of envelope draws \eqn{n_r} required for \eqn{r} acceptances,
+#' an unbiased estimator of \eqn{1/Z(\mu, \nu)} can be obtained and \eqn{\widehat{f}^{(r)}(y|\mu, \nu)} is computed.
+#' Please see Section 3 of the indicated reference for more details.
+#' 
+#' Obtaining an approximate BIC follows from recording the maximizer of \eqn{\widehat{f}^{(r)}(y|\mu_i, \nu_i)} for the MCMC
+#' iterations \eqn{i=1, 2, ...}. Note that there is no additional cost in this procedure since \code{rcompois}
+#' draws are part of the \code{fitcpbayes}'s posterior sampling via the exchange algorithm. 
+#' 
+#' The statistical estimator for BIC is then 
+#' \deqn{\widehat{BIC}^{(r)} = k\log(n) - 2\max \widehat{f}^{(r)}(y|\mu, \nu).}
+#' 
+#' 
+#' 
+#' @references 
+#' Benson, A. and Friel, N. (2021) Bayesian Inference, Model Selection and Likelihood Estimation using Fast Rejection Sampling: The Conway-Maxwell-Poisson Distribution.
+#' Bayesian Analysis (16) 905-931.
+#' 
 #' @param object cpbayes object
 #' @param ... additional arguments
 BIC= function(object, ...){
