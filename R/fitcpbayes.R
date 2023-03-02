@@ -9,20 +9,22 @@
 #' Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).
 #' @param prior_nu optional named list with 'shape' and 'rate' if no regression on dispersion, or 'mean' and 'sd' if running CP GLM.
 #' Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).
-fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
+#' @param inits Initial values.
+fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu, inits){
   
 
   #### Regression case (in either)  ----------------------------------------------------------
   if(ncol(X_mu) + ncol(X_nu) >2){
   
-  sigma_mu = rep(0.1, ncol(X_mu))
-  sigma_nu = rep(0.2, ncol(X_nu))
+  sigma_mu = rep(0.5, ncol(X_mu))
+  sigma_nu = rep(0.5, ncol(X_nu))
   
-  mcmc_raw = exchange_reg( c(log(mean(y)), rep(0, ncol(X_mu)-1)),  c(0.1, rep(0, ncol(X_nu)-1)), y, X_mu, X_nu, burnin, niter, sigma_mu, sigma_nu, prior_mu, prior_nu)
+  mcmc_raw = exchange_reg(inits$beta,  inits$nu, y, X_mu, X_nu, burnin, niter, sigma_mu, sigma_nu, prior_mu, prior_nu)
   
   ac_matrix = matrix(NA, nrow = max(c(ncol(X_mu), ncol(X_nu))), ncol=2)
   ac_matrix[1:ncol(X_mu),1] = mcmc_raw$ac_rates_mu
   ac_matrix[1:ncol(X_nu),2] = mcmc_raw$ac_rates_nu
+  
   
   colnames(ac_matrix) = c('mu', 'nu')
   mcmc = list('mu' = mcmc_raw$betamu, 'nu' = mcmc_raw$betanu, 
@@ -32,7 +34,7 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
   } else { #No regression case --------------------------------------------------
     
     hyperparams = list('shape' = c(prior_mu$shape, prior_nu$shape),'rate' =  c(prior_mu$rate, prior_nu$rate))
-    sigma = c(0.1, 0.1)
+    sigma = c(0.2, 0.2)
     
     mcmc_raw =exchange_noreg(y, c(1, 1), sigma, burnin, niter, hyperparams) 
     mcmc = list("mu" = matrix(mcmc_raw$mu, ncol =1), 
@@ -47,8 +49,9 @@ fitcpbayes_single = function(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
 #' 
 #' \code{fitcpbayes} fits generalised linear models to COM-Poisson distributed count data, supporting
 #' regression in the location and dispersion parameters.
-#' 
-#' @importFrom stats model.matrix model.frame model.response
+#'  
+#' @importFrom stats model.matrix model.frame model.response glm poisson coef
+#' @importFrom COMPoissonReg glm.cmp
 #' 
 #' @param formula_beta Object of class \code{formula}. Regression structure for \eqn{\mu}, the location parameter.
 #' @param formula_nu Object of class \code{formula}. Regression structure for \eqn{\nu}, the dispersion parameter.
@@ -155,13 +158,32 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
   
   if(ncol(X_mu) + ncol(X_nu) >2){ #Regression case -------------
     
+    #initial values:
+    pois_fit = stats::glm(formula_beta, family = poisson, data = data)
+    inits_beta = as.numeric(coefficients(pois_fit))
+    
+    cmp_fit = COMPoissonReg::glm.cmp(formula_beta, formula_nu, data = data)
+    mles = coefficients(cmp_fit)
+    inits_nu = as.numeric(mles[substr(names(mles), 1,1) == 'S'])
+    
+    inits = list();
+    inits$beta= inits_beta
+    inits$nu = inits_nu
+    
     if(missing(prior_mu)){
         prior_mu = list('mean'=0, 'sd'=1)
       }
     
     if(missing(prior_nu)){
       prior_nu = list('mean'=0, 'sd'=1)
-      }
+    }
+    
+    if(missing(burnin)){
+      burnin =1000
+    }
+    if(missing(niter)){
+      niter = 10000
+    }
     
     
   } else { #No regression ---------------------------------------
@@ -172,13 +194,19 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
     if(missing(prior_nu)){
       prior_nu = list('shape'=2, 'rate'=2)
     }
+    if(missing(burnin)){
+      burnin =1000
+    }
+    if(missing(niter)){
+      niter = 10000
+    }
     
   }
   
   #Execution:
-  if(missing(nchains)){
-    mcmc = fitcpbayes_single(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu)
-    mcmc = list(mcmc)
+  if(missing(nchains) | nchains ==1){
+    mcmc = fitcpbayes_single(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu, inits)
+    
   } else{
     
     if(missing(ncores)){
@@ -191,12 +219,13 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
     mcmc = parallel::parSapply(cl, 1:nchains, 
                                  function(times,X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu){
                                    fitcpbayes_single(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu)},
-                                 X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu,
+                                 X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu, inits,
                                  simplify = F)
     
     parallel::stopCluster(cl) 
   }
   
+ 
   class(mcmc) = 'cpbayes'
   return(mcmc)
   
@@ -241,7 +270,12 @@ fitcpbayes = function(formula_beta, formula_nu, data, burnin, niter, prior_mu, p
 summary.cpbayes = function(object, ...){
   
   mcmc = object
-  nchains = length(mcmc)
+  nchains = ifelse(!is.null(names(mcmc)),1, length(mcmc)) 
+  
+  if(nchains ==1){
+    mcmc = list(mcmc)
+  }
+ 
   niter = nrow(mcmc[[1]][[1]])
   
   mu_chain = data.frame(do.call(rbind, lapply(mcmc, "[[", "mu")))

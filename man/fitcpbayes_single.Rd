@@ -4,7 +4,7 @@
 \alias{fitcpbayes_single}
 \title{Runs a single chain of COM-Poisson GLM}
 \usage{
-fitcpbayes_single(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu)
+fitcpbayes_single(X_mu, X_nu, y, burnin, niter, prior_mu, prior_nu, inits)
 }
 \arguments{
 \item{X_mu}{parsed regression matrix for location}
@@ -22,6 +22,8 @@ Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).}
 
 \item{prior_nu}{optional named list with 'shape' and 'rate' if no regression on dispersion, or 'mean' and 'sd' if running CP GLM.
 Defaults to ('shape' =2, 'rate' =2) or ('mean' =0, 'sd' =1).}
+
+\item{inits}{Initial values.}
 }
 \description{
 Runs a single chain of COM-Poisson GLM
